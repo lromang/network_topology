@@ -23,6 +23,7 @@ suppressPackageStartupMessages(library(tidyr))
 suppressPackageStartupMessages(library(stringr))
 ## Manejo de data frames
 suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(foreign))
 ## Predicción
 suppressPackageStartupMessages(library(caret))
 ## Geoespacial
@@ -170,6 +171,28 @@ get_connect <- function(lat, lon, dist = 20, net = 3){
 }
 
 ##-------------------------------------
+## get_altitude
+##-------------------------------------
+get_altitude <- function(locations){
+    ##-------------------------------------
+    ## This function uses Google's API "directions" to
+    ## calculate the driving distance between two points given.
+    ## locations  = list of points in (latitude, longitude) format
+    ##-------------------------------------
+    base        <- "https://maps.googleapis.com/maps/api/elevation/json?"
+    locations   <- paste0(base, "locations=",
+                         paste(
+                             laply(locations,
+                                   function(t) t <- paste(t, collapse = ",")),
+                             collapse = "|")
+                         )
+    key         <- "key=AIzaSyAkW2m1J6oq_UblEtwhzVB9EYmz7Ayc4k0"
+    query       <- paste(locations, key, sep = "&")
+    fromJSON(getURL(query))
+}
+
+
+##-------------------------------------
 ## transform coord
 ##-------------------------------------
 trans_coord <- function(coord, pow = 1){
@@ -185,23 +208,22 @@ trans_coord <- function(coord, pow = 1){
 ##-------------------------------------
 ## tesselate
 ##-------------------------------------
-## Aquí Monsi...
 ## Coordenadas de bloque de interés.
 tesselate <- function(grids,
                      map          = NULL,
                      alpha        = .3,
-                     top_left     = c(-100.976, 26.204),
-                     bottom_left  = c(-100.976, 25.188),
-                     top_right    = c(-99.525, 26.204),
-                     bottom_right = c(-99.525, 25.188)){
-  results  <- list()
+                     top_left     = c(-117.243165, 33.075322),
+                     bottom_left  = c(-117.243165, 30.968130),
+                     top_right    = c(-105.763217, 33.075322),
+                     bottom_right = c(-105.763217, 30.968130)){
+  results    <- list()
   intercepts <- ceiling(sqrt(grids+1))
-  h_lines <- data.frame(x    = rep(top_left[1], intercepts),
-                       y    = seq(top_left[2], bottom_left[2],
-                                  length = intercepts),
-                        xend = rep(top_right[1], intercepts),
-                       yend  = seq(top_right[2], bottom_right[2],
-                                  length = intercepts))
+  h_lines    <- data.frame(x    = rep(top_left[1], intercepts),
+                          y    = seq(top_left[2], bottom_left[2],
+                                     length = intercepts),
+                          xend = rep(top_right[1], intercepts),
+                          yend = seq(top_right[2], bottom_right[2],
+                                      length = intercepts))
   v_lines <- data.frame(x = seq(top_left[1], top_right[1],
                                length = intercepts),
                         y = rep(top_left[2], intercepts),
