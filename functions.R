@@ -21,7 +21,7 @@ library(maptools)
 library(spatstat)
 library(rgeos)
 library(rgdal)
-|########################################
+########################################
 ## Functions
 ########################################
 
@@ -53,6 +53,27 @@ get_directions <- function(origen, destino, mode = "driving"){
         "start_loc"  = ldply(steps, function(t)t <- t$start_location),
         "end_loc"    = ldply(steps, function(t)t <- t$end_location)
         )
+}
+
+##-------------------------------------
+## get_altitude
+##-------------------------------------
+get_altitude <- function(locations){
+    ##-------------------------------------
+    ## This function uses Google's API "directions" to
+    ## calculate the driving distance between two points given.
+    ## locations  = list of points in (latitude, longitude) format
+    ##-------------------------------------
+    base        <- "https://maps.googleapis.com/maps/api/elevation/json?"
+    locations   <- paste0(base, "locations=",
+                         paste(
+                             laply(locations,
+                                   function(t) t <- paste(t, collapse = ",")),
+                             collapse = "|")
+                         )
+    key         <- "key=AIzaSyAkW2m1J6oq_UblEtwhzVB9EYmz7Ayc4k0"
+    query       <- paste(locations, key, sep = "&")
+    fromJSON(getURL(query))
 }
 
 ##-------------------------------------
