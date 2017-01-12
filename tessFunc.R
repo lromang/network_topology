@@ -212,10 +212,10 @@ trans_coord <- function(coord, pow = 1){
 tesselate <- function(grids,
                      map          = NULL,
                      alpha        = .3,
-                     top_left     = c(-117.243165, 33.075322),
-                     bottom_left  = c(-117.243165, 30.968130),
-                     top_right    = c(-105.763217, 33.075322),
-                     bottom_right = c(-105.763217, 30.968130)){
+                     top_left     = c(-117.1276, 32.7225),
+                     bottom_left  = c(-117.1276, 30.8636),
+                     top_right    = c(-114.7012, 32.7225),
+                     bottom_right = c(-114.7012, 30.8636)){
   results    <- list()
   intercepts <- ceiling(sqrt(grids+1))
   h_lines    <- data.frame(x    = rep(top_left[1], intercepts),
