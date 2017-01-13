@@ -101,3 +101,29 @@ writeOGR(poly,
 ## --------------------------------
 ## Blocks
 ## --------------------------------
+
+blocks_q <- readOGR("../data/blocks/frontera_cuad",
+                   "frontA")
+blocks_data <- read.dbf("../data/blocks/frontera_cuad/frontA.dbf")
+
+## Get central points
+centralPoints <- function(b.data, n.points = 1){
+    points <- list()
+    for(i in 1:nrow(b.data)){
+        points[[i]] <- gcIntermediate(c(b.data$X_MAX[i],
+                                       b.data$Y_MAX[i]),
+                                     c(b.data$X_MIN[i],
+                                       b.data$Y_MIN[i]),
+                                     n.points)[2:1]
+    }
+    points
+}
+
+## Get centers
+centers <- centralPoints(blocks_data)
+
+## Get Altitudes
+altitudes <- get_altitude(centers[1:3])
+
+## Only Altitudes
+only.altitudes <- laply(altitudes[[1]], function(t)t <- t$elevation)

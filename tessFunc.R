@@ -175,8 +175,8 @@ get_connect <- function(lat, lon, dist = 20, net = 3){
 ##-------------------------------------
 get_altitude <- function(locations){
     ##-------------------------------------
-    ## This function uses Google's API "directions" to
-    ## calculate the driving distance between two points given.
+    ## This function uses Google's API "elevation" to
+    ## calculate the altitude of the  points given.
     ## locations  = list of points in (latitude, longitude) format
     ##-------------------------------------
     base        <- "https://maps.googleapis.com/maps/api/elevation/json?"
