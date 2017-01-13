@@ -123,15 +123,22 @@ centers <- centralPoints(blocks_data)
 ## -----------------------------------------------------
 ## Esto es lo que hay que paralelizar!!!!
 ## Get Altitudes
-altitudes <- get_altitude(centers[1:200])
-## Only Altitudes
-only.altitudes <- laply(altitudes[[1]], function(t)t <- t$elevation)
-## Aquí se acaba la paralelización!!!!
-write.csv(only.altitudes,
-          paste0("../data/output/altitudes/altitudes",
-                 i)
-          )
+values <- seq(1, 2001, 200)
+for(i in 1:(length(values) - 1)){
+    altitudes <- get_altitude(centers[values[i]:values[i + 1]])
+    ## Only Altitudes
+    only.altitudes <- laply(altitudes[[1]], function(t)t <- t$elevation)
+    ## Aquí se acaba la paralelización!!!!
+    write.csv(only.altitudes,
+              paste0("../data/output/altitudes/altitudes",
+                     i, ".csv")
+              )
+    Sys.sleep(5)
+    print(i)
+}
 ## -----------------------------------------------------
+
+## Read in all altitudes
 
 ## Save altitudes
 data.altitudes <- data.frame("block" = 1:length(only.altitudes),
