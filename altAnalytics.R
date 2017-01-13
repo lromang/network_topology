@@ -52,11 +52,11 @@ all_blocks_shp <- list()
 for(i in 1:length(block)){
     cell      <- block[[i]]
     block_shp <- data.frame(
-        x = c(rep(block[[1]][1], 2),
-              rep(block[[2]][1], 2)
+        x = c(rep(cell[[1]][1], 2),
+              rep(cell[[2]][1], 2)
               ),
-        y = c(rep(c(block[[1]][2],
-                    block[[2]][2]), 2))
+        y = c(rep(c(cell[[1]][2],
+                    cell[[2]][2]), 2))
     )
     block_shp[c(3,4), ] <- block_shp[c(4,3), ]
 
@@ -72,14 +72,32 @@ block_shp <- SpatialPolygons(all_blocks_shp)
 poly      <- SpatialPolygonsDataFrame(
     block_shp,
     data.frame(
-        PIDS      = paste(seq(1, length(blocks_in), 1), sep = "\n"),
-        block_cp  = block_cp[inside],
-        block_pop = allpop_1[inside]
+        PIDS      = paste(seq(1, length(block), 1), sep = "\n"),
+        econUnit  = obs_den,
+        area      = area_den
     )
 )
 
 ## Escribir resultados
 writeOGR(poly,
-         "../data/output/blocks/nl",
-         "block_monterrey",
+         "../data/output/blocks/",
+         "first_frag",
          driver = "ESRI Shapefile")
+
+
+
+## ------------------------------
+## Change Zip Code
+## ------------------------------
+## zip_code_nl    <- readOGR("../data/zip_code/cp_mon",
+##                         "CP_mon")
+## proj4string(zip_code_nl) <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+## zip_test <- spTransform(zip_code_nl, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+## writeOGR(zip_test,
+##          "../data/output/zip_nl",
+##         "new_nl",
+##         driver = "ESRI Shapefile")
+
+## --------------------------------
+## Blocks
+## --------------------------------
