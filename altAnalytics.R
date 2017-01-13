@@ -98,14 +98,6 @@ writeOGR(poly,
 ##         "new_nl",
 ##         driver = "ESRI Shapefile")
 
-## --------------------------------
-## Blocks
-## --------------------------------
-
-blocks_q <- readOGR("../data/blocks/frontera_cuad",
-                   "frontA")
-blocks_data <- read.dbf("../data/blocks/frontera_cuad/frontA.dbf")
-
 ## Get central points
 centralPoints <- function(b.data, n.points = 1){
     points <- list()
@@ -119,11 +111,31 @@ centralPoints <- function(b.data, n.points = 1){
     points
 }
 
+
+## --------------------------------
+## Blocks
+## --------------------------------
+blocks_data <- read.dbf("../data/blocks/frontera_cuad/frontA.dbf")
+
 ## Get centers
 centers <- centralPoints(blocks_data)
 
+## -----------------------------------------------------
+## Esto es lo que hay que paralelizar!!!!
 ## Get Altitudes
-altitudes <- get_altitude(centers[1:3])
-
+altitudes <- get_altitude(centers[1:200])
 ## Only Altitudes
 only.altitudes <- laply(altitudes[[1]], function(t)t <- t$elevation)
+## Aquí se acaba la paralelización!!!!
+write.csv(only.altitudes,
+          paste0("../data/output/altitudes/altitudes",
+                 i)
+          )
+## -----------------------------------------------------
+
+## Save altitudes
+data.altitudes <- data.frame("block" = 1:length(only.altitudes),
+                            "elevation" = only.altitudes)
+ggplot(data = data.altitudes,
+       aes(x = block, y = elevation)) + geom_line() +
+    geom_point()
