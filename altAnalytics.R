@@ -79,9 +79,9 @@ poly      <- SpatialPolygonsDataFrame(
 )
 
 ## Escribir resultados
-writeOGR(poly,
-         "../data/output/blocks/",
-         "first_frag",
+writeOGR(block_centroids,
+         "../data/",
+         "test_centroids",
          driver = "ESRI Shapefile")
 
 
@@ -114,23 +114,35 @@ centralPoints <- function(b.data, n.points = 1){
 
 ## --------------------------------
 ## Blocks
+## Here is where we start executing
+## for getting the altitudes
 ## --------------------------------
-blocks_data <- read.dbf("../data/blocks/frontera_cuad/frontA.dbf")
+all_centers <- c()
+for(i in 1:36){
+    blocks          <- readOGR(paste0("../data/tramos/",i,"/"),
+                          paste0(i))
+    block_centroids <- gCentroid(blocks, byid=TRUE)
+    all_centers     <- rbind(all_centers, block_centroids@coords)
+    print(i)
+}
 
+## blocks_data <- read.dbf("../data/tramos/1/1.dbf")
 ## Get centers
-centers <- centralPoints(blocks_data)
+## centers <- centralPoints(blocks_data)
 
 ## -----------------------------------------------------
 ## Esto es lo que hay que paralelizar!!!!
 ## Get Altitudes
-values <- seq(1, 2001, 200)
+centers <- block_centroids@coords[, 2:1]
+values  <- seq(10001, 12001, 200)
 for(i in 1:(length(values) - 1)){
-    altitudes <- get_altitude(centers[values[i]:values[i + 1]])
+    altitudes <- get_altitudes_matrix(
+        centers[values[i]:min(values[i + 1], nrow(centers)),])
     ## Only Altitudes
     only.altitudes <- laply(altitudes[[1]], function(t)t <- t$elevation)
     ## Aquí se acaba la paralelización!!!!
     write.csv(only.altitudes,
-              paste0("../data/output/altitudes/altitudes",
+              paste0("../data/output/orthoAltitudes/altitudes6",
                      i, ".csv")
               )
     Sys.sleep(5)
@@ -139,10 +151,105 @@ for(i in 1:(length(values) - 1)){
 ## -----------------------------------------------------
 
 ## Read in all altitudes
-
+files <- list.files("../data/output/orthoAltitudes/.")
+## Get altitudes
+all.altitudes  <- llply(files, function(t)t <- read.csv(paste0("../data/output/orthoAltitudes/", t)))
+all.altitudes.data <- c()
+for(i in 1:length(all.altitudes)){
+    all.altitudes.data <- c(all.altitudes.data, all.altitudes[[i]]$x)
+}
 ## Save altitudes
-data.altitudes <- data.frame("block" = 1:length(only.altitudes),
-                            "elevation" = only.altitudes)
+data.altitudes <- data.frame("block" = blocks@data$id,
+                            "elevation" = all.altitudes.data[1:nrow(centers)],
+                            "lon" = centers[,2],
+                            "lat" = centers[,1])
 ggplot(data = data.altitudes,
-       aes(x = block, y = elevation)) + geom_line() +
-    geom_point()
+       aes(x = block, y = elevation)) + geom_line()
+
+## -------------------------------------
+## Save data
+## -------------------------------------
+## array.centers <- ldply(centers, function(t) t <- t[2:1])
+## names(array.centers) <- c("longitude", "latitude")
+## data.altitudes.c <- cbind(na.omit(data.altitudes), array.centers)
+write.csv(data.altitudes, "../data/output/blocksAltitudeortho.csv", row.names = FALSE)
+
+## PLOT
+ggplot(data = data.altitudes.c,
+       aes(x = longitude, y = latitude, color = elevation)) + geom_point()
+
+## -------------------------------------
+## Read data
+## -------------------------------------
+elev.data <- read.csv("../data/output/blocksAltitudeortho.csv",
+                     stringsAsFactors = FALSE)
+
+## PLOT
+elev.data$meters <- elev.data$block * 20
+
+data.grad <- data.frame("meters" = elev.data$meters[2:nrow(elev.data)],
+                       "grad"   =abs(diff(elev.data$elevation)/diff(elev.data$meters)))
+
+## Elevation
+elev.plot <- ggplot(data = elev.data,
+       aes(x = meters, y = elevation)) + geom_line(color="#1972b9",
+                                              alpha=.7) +
+    theme(panel.background = element_blank(),
+          axis.title = element_text(face = "bold",
+                                    color = "#1972b9")) +
+    ylab("Elevation") + xlab("Meters")
+ggsave("../graphs/elevationsOrtho.png", elev.plot, width = 18, height = 10)
+## Gradient
+grad.plot <- ggplot(data = data.grad,
+       aes(x = meters, y = grad)) + geom_line(color="#1972b9",
+                                              alpha=.7) +
+    theme(panel.background = element_blank(),
+          axis.title = element_text(face = "bold",
+                                    color = "#1972b9")) +
+ylab("Gradient") + xlab("Meters")
+ggsave("../graphs/gradientOrtho.png", grad.plot, width = 18, height = 10)
+
+## -------------------------------------
+## Add Data to blocks
+## -------------------------------------
+blocks@data$elevation <- elev.data$elevation
+
+
+## writeOGR(zip_test,
+##          "../data/output/zip_nl",
+##         "new_nl",
+##         driver = "ESRI Shapefile")
+
+## -------------------------------------
+## Working with The data points
+## -------------------------------------
+b.points   <- read.csv("../data/borderPoints/nodes_reloaded-buena-clean.csv",
+                      stringsAsFactors = FALSE)
+coords     <- laply(b.points$wkt_geom, function(t)t <- str_split(t, " "))
+b.points$x <- laply(coords, function(t) t <- readr::parse_number(t[1]))
+b.points$y <- laply(coords, function(t) t <- readr::parse_number(t[2]))
+ggplot(data = b.points, aes(x = x, y = y)) + geom_point()
+points     <- data.frame("x" = b.points$x,
+                        "y" = b.points$y)
+## Gen Squares
+all_squares <- gen_multi_squares(points)
+## Bind together orthonormal_squares
+all_squares <- c()
+## b.points <- b.points[order(b.points$OBJECTID, decreasing = TRUE), ]
+for(i in 1:(nrow(b.points) - 1)){
+    all_squares <- rbind(all_squares,
+                        orthonormal_square(c(b.points$x[i], b.points$y[i]),
+                                           c(b.points$x[i + 1], b.points$y[i + 1]),
+                                           dist = 10,
+                                           id   = b.points$id_bueno[i])
+                        )
+    print(i)
+}
+
+
+ggplot(data = all_squares,
+       aes(x = x, y = y, col = id)) + geom_polygon(alpha = .3) +
+    theme(legend.position = "none")
+
+
+ggplot(data = test, aes(x = x, y = y, col = id)) + geom_point()

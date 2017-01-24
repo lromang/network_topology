@@ -51,6 +51,113 @@ suppressPackageStartupMessages(library(foreign))
 ########################################
 
 ##-------------------------------------
+## get_orthonormal
+##-------------------------------------
+get_orthonormal <- function(point1, point2){
+    dir  <- point2 - point1
+    if(dir[1] == dir[2] & dir[2] == 0){
+        orth <- dir
+    }else{
+        orth <- c(-dir[2], dir[1])/sqrt(dir[1]^2 + dir[2]^2)
+    }
+    orth
+}
+
+##-------------------------------------
+## gen_inter_point
+##-------------------------------------
+gen_inter_point  <- function(point1, point2, step = 20){
+    dir          <- point2 - point1
+    ## Save first point
+    inter_points <- data.frame("x" = point1[1],
+                              "y" = point1[2])
+    if((dir[1]^2 + dir[2]^2) > 0){
+        dir      <- dir / sqrt(dir[1]^2 + dir[2]^2)
+        ## Get Distance between points
+        dist     <- distCosine(point1, point2)
+        iters    <- floor(dist / step)
+        ## Generate points
+        step_point   <- point1
+        for(i in 1:iters){
+            step_point   <- step_point + dir*((step / r_earth) * (180 / pi))
+            inter_points <- rbind(inter_points, step_point)
+        }
+        inter_points <- rbind(inter_points, point2)
+    }
+    ## Return
+    inter_points
+}
+
+##-------------------------------------
+## gen_multi_inter_point
+##-------------------------------------
+gen_multi_inter_point <- function(points){
+    all_points <- c()
+    for(i in 1:(nrow(points) - 1)){
+        all_points <- rbind(all_points, gen_inter_point(points[i,],
+                                                       points[i + 1,]))
+        print(i)
+    }
+    ## Add id
+    all_points$id <- 1:nrow(all_points)
+    ## Return points
+    all_points
+}
+
+##-------------------------------------
+## gen_multi_squares
+##-------------------------------------
+gen_multi_squares <- function(points){
+    points <- gen_multi_inter_point(points)
+    ## Gen Squares
+    all_squares <- c()
+    for(i in 1:(nrow(points) - 1)){
+        all_squares <- rbind(all_squares,
+                            orthonormal_square(c(points$x[i], points$y[i]),
+                                               c(points$x[i + 1], points$y[i + 1]),
+                                               dist = 10,
+                                               id   = points$id[i])
+                            )
+        print(i)
+    }
+    ## PLOT
+    print(ggplot(data = all_squares,
+       aes(x = x, y = y, col = id)) + geom_polygon(alpha = .3) +
+    theme(legend.position = "none"))
+
+    ## RETURN
+    all_squares
+}
+
+##-------------------------------------
+## orthonormal_square
+##-------------------------------------
+orthonormal_square <- function(point1, point2, dist, id = 1,
+                              r_earth = 6378137, plot = FALSE){
+    dir      <- get_orthonormal(point1, point2)
+    ## Left point
+    pointul   <- point1  + dir*((dist / r_earth) * (180 / pi))
+    pointll   <- point1  - dir*((dist / r_earth) * (180 / pi))
+    ## Lat 1
+    pointur   <- point2  + dir*((dist / r_earth) * (180 / pi))
+    pointlr   <- point2  - dir*((dist / r_earth) * (180 / pi))
+    ## Points as Data Frame
+    points <- data.frame("x" = c(pointul[1],
+                                pointll[1],
+                                pointlr[1],
+                                pointur[1]),
+                        "y" = c(pointul[2],
+                                pointll[2],
+                                pointlr[2],
+                                pointur[2]),
+                        "id" = rep(paste0(id), 4))
+    if(plot){
+        print(ggplot(data = points, aes(x = x, y = y)) + geom_polygon(alpha = .3))
+    }
+    points
+}
+
+##-------------------------------------
 ## get_directions
 ##-------------------------------------
 get_directions <- function(origen, destino, mode = "driving"){
@@ -187,10 +294,31 @@ get_altitude <- function(locations){
                              collapse = "|")
                          )
     key         <- "key=AIzaSyAkW2m1J6oq_UblEtwhzVB9EYmz7Ayc4k0"
+    ## key         <- "key=AIzaSyB_Y84utrZHkMK6LMu4Wy0lAPRQdjE-MdE"
+    ## key         <- "key=AIzaSyDGpP7-Zq7XMiuoeL2tgG6mjof4PmKeyVY"
+    ## key         <- "key=AIzaSyCuk-zf-TSwoXy_VJO-CKyiLp6fuc_wd7c"
+    ## key         <- "key=AIzaSyDI8dbWHa6LcYeLpi7WLn0Xko_A0WsBoa8"
+    ## key         <- "key=AIzaSyDsOCeoZK5dnah0EaThfDoZlip4kzTgtAc"
+    ## key         <- "key=AIzaSyCSzRpseAAEASuzDKLRYC50FQlx6x5psxU"
+    ## key         <- "key=AIzaSyAkxFdycMr8COtHKfh667INihNC1yM9_Mg"
     query       <- paste(locations, key, sep = "&")
     fromJSON(getURL(query))
 }
 
+get_altitudes_matrix <- function(locations){
+    ##
+    ## Locations in a lat long format
+    ##
+    base      <- "https://maps.googleapis.com/maps/api/elevation/json?locations="
+    locations <- paste(
+        paste(locations[,1], locations[,2], sep = ","),
+        collapse = "|"
+    )
+    key         <- "your key"
+    query       <- paste0(base, locations)
+    query       <- paste(query, key, sep = "&")
+    fromJSON(getURL(query))
+}
 
 ##-------------------------------------
 ## transform coord
