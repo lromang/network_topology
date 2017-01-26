@@ -47,8 +47,8 @@ h.centers$gradient <- grad
 ## -------------------------------------
 ## Save data
 ## -------------------------------------
-write.csv(h.centers,
-          "../data/output/IDorthoAltitudes/heights16080.csv",
+write.csv(h.all,
+          "../data/output/IDorthoAltitudes/heights30150.csv",
           row.names = FALSE)
 
 ## -------------------------------------
@@ -72,7 +72,7 @@ grad.plot <- ggplot(data = h.centers,
     theme(panel.background = element_blank(),
           axis.title = element_text(face = "bold",
                                     color = "#1972b9")) +
-ylab("Gradient") + xlab("Meters")
+ylab("Gradient") + xlab("Kilometers")
 ggsave("../graphs/gradientOrtho.png", grad.plot, width = 18, height = 10)
 
 ######################################################################
