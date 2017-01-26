@@ -280,7 +280,7 @@ get_connect <- function(lat, lon, dist = 20, net = 3){
 ##-------------------------------------
 ## get_altitude
 ##-------------------------------------
-get_altitude <- function(locations){
+get_altitude <- function(locations, key){
     ##-------------------------------------
     ## This function uses Google's API "elevation" to
     ## calculate the altitude of the  points given.
@@ -293,19 +293,14 @@ get_altitude <- function(locations){
                                    function(t) t <- paste(t, collapse = ",")),
                              collapse = "|")
                          )
-    key         <- "key=AIzaSyAkW2m1J6oq_UblEtwhzVB9EYmz7Ayc4k0"
-    ## key         <- "key=AIzaSyB_Y84utrZHkMK6LMu4Wy0lAPRQdjE-MdE"
-    ## key         <- "key=AIzaSyDGpP7-Zq7XMiuoeL2tgG6mjof4PmKeyVY"
-    ## key         <- "key=AIzaSyCuk-zf-TSwoXy_VJO-CKyiLp6fuc_wd7c"
-    ## key         <- "key=AIzaSyDI8dbWHa6LcYeLpi7WLn0Xko_A0WsBoa8"
-    ## key         <- "key=AIzaSyDsOCeoZK5dnah0EaThfDoZlip4kzTgtAc"
-    ## key         <- "key=AIzaSyCSzRpseAAEASuzDKLRYC50FQlx6x5psxU"
-    ## key         <- "key=AIzaSyAkxFdycMr8COtHKfh667INihNC1yM9_Mg"
     query       <- paste(locations, key, sep = "&")
     fromJSON(getURL(query))
 }
 
-get_altitudes_matrix <- function(locations){
+##-------------------------------------
+## get_altitudes_matrix
+##-------------------------------------
+get_altitudes_matrix <- function(locations, key){
     ##
     ## Locations in a lat long format
     ##
@@ -314,10 +309,37 @@ get_altitudes_matrix <- function(locations){
         paste(locations[,1], locations[,2], sep = ","),
         collapse = "|"
     )
-    key         <- "your key"
     query       <- paste0(base, locations)
     query       <- paste(query, key, sep = "&")
     fromJSON(getURL(query))
+}
+
+##-------------------------------------
+## get_all_altitudes
+##-------------------------------------
+get_all_altitudes <- function(centers, keys){
+    all_altitudes <- c()
+    for(j in 1:length(keys)){
+        ## Get values in a sequence of step length 200.
+        ## 2000 because is the maximum number of queries
+        ## allowd.
+        values  <- seq(1 + 2000 * (j - 1), 1 + 2000 * j, 200)
+        key     <- keys[j]
+        for(i in 1:(length(values) - 1)){
+            altitudes <- get_altitudes_matrix(
+                centers[values[i]:min(values[i + 1], nrow(centers)),],
+                key)
+            ## Only Altitudes
+            only.altitudes <- laply(altitudes[[1]], function(t)t <- t$elevation)
+            ## Aquí se acaba la paralelización!!!!
+            all_altitudes  <-  c(all_altitudes, only.altitudes)
+            Sys.sleep(5)
+            print(i)
+        }
+    }
+    h.centers           <- centers[1:length(all_altitudes),]
+    h.centers$altitudes <- all_altitudes
+    h.centers
 }
 
 ##-------------------------------------

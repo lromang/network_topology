@@ -1,130 +1,85 @@
 source('./tessFunc.R')
 
-## ---------------------------------
-## MAP
-## ---------------------------------
-map         <- get_map(location = "Nogales",
-                      zoom     = 6,
-                      maptype  = "roadmap")
-map.plot  <- ggmap(map)
-
-## ---------------------------------
-## Read Data
-## ---------------------------------
-
-## Denue
-denue        <- read.dbf("../data/denue/denue_front.dbf")
-denue.filter <- denue[,c(40, 39)]
-
-## Censo
-censo <- read.dbf("../data/censo/censo_front.dbf")
-censo.filter <- censo[,c(8,9,10)]
-
-## ---------------------------------
-## Tesselate
-## ---------------------------------
-grid     <- 40000                                    # Number of cells
-tes      <- tesselate(grid,  map.plot, alpha = .05)  # Partition
-block    <- blocks(tes[[2]], tes[[3]])               # Cell creation
-
-## Partition Denue
-cell_den <- in.block.fac(block,  denue.filter)       # Cell characteristics
-
-## Partition Censo
-cell_cen <- in.block.fac(block, censo.filter)        # Cell characteristics
-
-## ------------------------------
-## Analysis
-## ------------------------------
-
-## Área por celda
-area_den <- laply(cell_den, function(t)t <- t[[4]])
-
-## Observaciones por celda
-obs_den  <- laply(cell_den, function(t)t <- t[[3]])
-
-## ------------------------------
-## Data to Shape
-## ------------------------------
-all_blocks_shp <- list()
-
-## Build shape
-for(i in 1:length(block)){
-    cell      <- block[[i]]
-    block_shp <- data.frame(
-        x = c(rep(cell[[1]][1], 2),
-              rep(cell[[2]][1], 2)
-              ),
-        y = c(rep(c(cell[[1]][2],
-                    cell[[2]][2]), 2))
-    )
-    block_shp[c(3,4), ] <- block_shp[c(4,3), ]
-
-    ## Convertir a Polígono
-    block_shp           <- Polygon(block_shp)
-    block_shp           <- Polygons(list(block_shp), paste0(i))
-    all_blocks_shp[[i]] <- block_shp
-}
-
-## Aquí van a ir todos.
-block_shp <- SpatialPolygons(all_blocks_shp)
-
-poly      <- SpatialPolygonsDataFrame(
-    block_shp,
-    data.frame(
-        PIDS      = paste(seq(1, length(block), 1), sep = "\n"),
-        econUnit  = obs_den,
-        area      = area_den
-    )
-)
-
-## Escribir resultados
-writeOGR(block_centroids,
-         "../data/",
-         "test_centroids",
-         driver = "ESRI Shapefile")
-
-
-
-## ------------------------------
-## Change Zip Code
-## ------------------------------
-## zip_code_nl    <- readOGR("../data/zip_code/cp_mon",
-##                         "CP_mon")
-## proj4string(zip_code_nl) <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
-## zip_test <- spTransform(zip_code_nl, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
-## writeOGR(zip_test,
-##          "../data/output/zip_nl",
-##         "new_nl",
-##         driver = "ESRI Shapefile")
-
-## Get central points
-centralPoints <- function(b.data, n.points = 1){
-    points <- list()
-    for(i in 1:nrow(b.data)){
-        points[[i]] <- gcIntermediate(c(b.data$X_MAX[i],
-                                       b.data$Y_MAX[i]),
-                                     c(b.data$X_MIN[i],
-                                       b.data$Y_MIN[i]),
-                                     n.points)[2:1]
-    }
-    points
-}
-
-
 ## --------------------------------
 ## Blocks
-## Here is where we start executing
-## for getting the altitudes
+## Read in blocks
 ## --------------------------------
+## Do it block by block!!!!
 all_centers <- c()
-for(i in 1:36){
-    blocks          <- readOGR(paste0("../data/tramos/",i,"/"),
-                          paste0(i))
-    block_centroids <- gCentroid(blocks, byid=TRUE)
-    all_centers     <- rbind(all_centers, block_centroids@coords)
+for(i in 2:36){
+    blocks               <- readOGR(paste0("../data/tramos/", i,"/"),
+                                   paste0(i))
+    block_centroids      <- gCentroid(blocks, byid=TRUE)
+    id_centroids         <- as.data.frame(block_centroids@coords)
+    id_centroids$id      <- as.array(blocks@data$id)
+    id_centroids$chunkID <- rep(i, nrow(id_centroids))
+    all_centers          <- rbind(all_centers, id_centroids)
     print(i)
 }
+all_centers[, 1:2]      <- all_centers[, 2:1]
+names(all_centers)[1:2] <- names(all_centers)[2:1]
+
+## -------------------------------------
+## Get Distances
+## -------------------------------------
+distances    <- c()
+distances[1] <- 0
+for(i in 2:nrow(all_centers)){
+    distances[i] <- distCosine(all_centers[i, 2:1],
+                              all_centers[i - 1, 2:1])
+}
+all_centers$distance <- distances
+
+## -------------------------------------
+## Get Heights
+## -------------------------------------
+
+h.centers <- get_all_altitudes(all_centers, keys)
+
+## -------------------------------------
+## Get gradient
+## -------------------------------------
+grad    <- c()
+grad[1] <- 0
+grad    <- c(grad, abs(diff(h.centers$altitudes)/diff(cumsum(h.centers$distance))))
+h.centers$gradient <- grad
+
+## -------------------------------------
+## Save data
+## -------------------------------------
+write.csv(h.centers,
+          "../data/output/IDorthoAltitudes/heights16080.csv",
+          row.names = FALSE)
+
+## -------------------------------------
+## Plot results
+## -------------------------------------
+
+## Elevation
+elev.plot <- ggplot(data = h.centers,
+       aes(x = cumsum(distance)/1000, y = altitudes)) + geom_line(color="#1972b9",
+                                              alpha=.7) +
+    theme(panel.background = element_blank(),
+          axis.title = element_text(face = "bold",
+                                    color = "#1972b9")) +
+    ylab("Elevation") + xlab("Kilometers")
+ggsave("../graphs/elevationsOrtho.png", elev.plot, width = 18, height = 10)
+
+## Gradient
+grad.plot <- ggplot(data = h.centers,
+       aes(x = cumsum(distance)/1000, y = gradient)) + geom_line(color="#1972b9",
+                                              alpha=.7) +
+    theme(panel.background = element_blank(),
+          axis.title = element_text(face = "bold",
+                                    color = "#1972b9")) +
+ylab("Gradient") + xlab("Meters")
+ggsave("../graphs/gradientOrtho.png", grad.plot, width = 18, height = 10)
+
+######################################################################
+######################################################################
+######################################################################
+######################################################################
+######################################################################
 
 ## blocks_data <- read.dbf("../data/tramos/1/1.dbf")
 ## Get centers
@@ -133,21 +88,21 @@ for(i in 1:36){
 ## -----------------------------------------------------
 ## Esto es lo que hay que paralelizar!!!!
 ## Get Altitudes
-centers <- block_centroids@coords[, 2:1]
-values  <- seq(10001, 12001, 200)
-for(i in 1:(length(values) - 1)){
-    altitudes <- get_altitudes_matrix(
-        centers[values[i]:min(values[i + 1], nrow(centers)),])
+## centers <- block_centroids@coords[, 2:1]
+## values  <- seq(6001, 8001, 200)
+## for(i in 1:(length(values) - 1)){
+##    altitudes <- get_altitudes_matrix(
+##        centers[values[i]:min(values[i + 1], nrow(centers)),])
     ## Only Altitudes
-    only.altitudes <- laply(altitudes[[1]], function(t)t <- t$elevation)
+##    only.altitudes <- laply(altitudes[[1]], function(t)t <- t$elevation)
     ## Aquí se acaba la paralelización!!!!
-    write.csv(only.altitudes,
-              paste0("../data/output/orthoAltitudes/altitudes6",
-                     i, ".csv")
-              )
-    Sys.sleep(5)
-    print(i)
-}
+##    write.csv(only.altitudes,
+##              paste0("../data/output/orthoAltitudes/altitudes9991",
+##                     i, ".csv")
+##              )
+##    Sys.sleep(5)
+##    print(i)
+## }
 ## -----------------------------------------------------
 
 ## Read in all altitudes
@@ -178,36 +133,6 @@ write.csv(data.altitudes, "../data/output/blocksAltitudeortho.csv", row.names = 
 ggplot(data = data.altitudes.c,
        aes(x = longitude, y = latitude, color = elevation)) + geom_point()
 
-## -------------------------------------
-## Read data
-## -------------------------------------
-elev.data <- read.csv("../data/output/blocksAltitudeortho.csv",
-                     stringsAsFactors = FALSE)
-
-## PLOT
-elev.data$meters <- elev.data$block * 20
-
-data.grad <- data.frame("meters" = elev.data$meters[2:nrow(elev.data)],
-                       "grad"   =abs(diff(elev.data$elevation)/diff(elev.data$meters)))
-
-## Elevation
-elev.plot <- ggplot(data = elev.data,
-       aes(x = meters, y = elevation)) + geom_line(color="#1972b9",
-                                              alpha=.7) +
-    theme(panel.background = element_blank(),
-          axis.title = element_text(face = "bold",
-                                    color = "#1972b9")) +
-    ylab("Elevation") + xlab("Meters")
-ggsave("../graphs/elevationsOrtho.png", elev.plot, width = 18, height = 10)
-## Gradient
-grad.plot <- ggplot(data = data.grad,
-       aes(x = meters, y = grad)) + geom_line(color="#1972b9",
-                                              alpha=.7) +
-    theme(panel.background = element_blank(),
-          axis.title = element_text(face = "bold",
-                                    color = "#1972b9")) +
-ylab("Gradient") + xlab("Meters")
-ggsave("../graphs/gradientOrtho.png", grad.plot, width = 18, height = 10)
 
 ## -------------------------------------
 ## Add Data to blocks
@@ -253,3 +178,55 @@ ggplot(data = all_squares,
 
 
 ggplot(data = test, aes(x = x, y = y, col = id)) + geom_point()
+
+
+### ------------------------------
+### ------------------------------
+### Distance Between Points and
+### border.
+### ------------------------------
+### ------------------------------
+new_border <- readOGR("../data/new_border/",
+                     "new_border")
+
+denue     <- readOGR("../data/denue/",
+                    "denue")
+
+censo     <- readOGR("../data/censo_60/",
+                    "censo_60")
+
+pnts.denue <- denue@data[,c(39,40)]
+pnts.censo <- censo@data[,c(8, 9)]
+
+shortest.dists <- numeric(nrow(pnts.censo))
+for(i in 1:nrow(pnts.censo)){
+    shortest.dists[i] <- gDistance(censo[i, ], new_border)
+    print(i)
+}
+
+pnts.censo$dist <- shortest.dists * 43.496
+
+censo@data$dist <- shortest.dists * 43.496
+
+
+writeOGR(censo,
+         "../data/output/dist60/",
+         "censo",
+         driver = "ESRI Shapefile")
+
+denue@data$dist <- pnts$dist
+
+writeOGR(denue,
+         "../data/output/dist60/",
+         "denue",
+         driver = "ESRI Shapefile")
+
+
+write.csv(pnts.censo,
+          "../data/output/dist60/dist_border_censo.csv",
+          row.names = FALSE)
+
+ggplot(denue@data,
+       aes(x = longitud,
+           y = latitud,
+           col = dist)) + geom_point()
