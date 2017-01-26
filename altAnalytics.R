@@ -33,7 +33,7 @@ all_centers$distance <- distances
 ## -------------------------------------
 ## Get Heights
 ## -------------------------------------
-
+keys <- c()
 h.centers <- get_all_altitudes(all_centers, keys)
 
 ## -------------------------------------
