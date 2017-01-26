@@ -317,13 +317,13 @@ get_altitudes_matrix <- function(locations, key){
 ##-------------------------------------
 ## get_all_altitudes
 ##-------------------------------------
-get_all_altitudes <- function(centers, keys){
+get_all_altitudes <- function(centers, keys, base = 1, queries = 2500, step = 200){
     all_altitudes <- c()
     for(j in 1:length(keys)){
         ## Get values in a sequence of step length 200.
         ## 2000 because is the maximum number of queries
         ## allowd.
-        values  <- seq(16081 + 2000 * (j - 1), 16081 + 2000 * j, 200)
+        values  <- seq(base + queries * (j - 1), base + queries * j, step)
         key     <- keys[j]
         for(i in 1:(length(values) - 1)){
             altitudes <- get_altitudes_matrix(
