@@ -1,12 +1,10 @@
 source('./tessFunc.R')
-
 ## --------------------------------
 ## Blocks
 ## Read in blocks
 ## --------------------------------
-## Do it block by block!!!!
 all_centers <- c()
-for(i in 2:36){
+for(i in 1:36){
     blocks               <- readOGR(paste0("../data/tramos/", i,"/"),
                                    paste0(i))
     block_centroids      <- gCentroid(blocks, byid=TRUE)
@@ -33,9 +31,8 @@ all_centers$distance <- distances
 ## -------------------------------------
 ## Get Heights
 ## -------------------------------------
-keys <- c(
-)
-h.centers <- get_all_altitudes(all_centers, keys)
+keys <- c()
+h.centers <- get_all_altitudes(all_centers, keys, base = 1, queries = 2400, step = 200)
 
 ## -------------------------------------
 ## Get gradient
@@ -48,8 +45,8 @@ h.centers$gradient <- grad
 ## -------------------------------------
 ## Save data
 ## -------------------------------------
-write.csv(h.all,
-          "../data/output/IDorthoAltitudes/heights30150.csv",
+write.csv(h.centers,
+          "../data/output/IDorthoAltitudes/heights53064.csv",
           row.names = FALSE)
 
 ## -------------------------------------
