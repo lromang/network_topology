@@ -82,6 +82,24 @@ get_num_distance <- function(origin, destiny, mode = 'driving'){
 
 
 ##-------------------------------------
+## get distance bulk
+##-------------------------------------
+get_num_distance_bulk <- function(points, mode = 'driving'){
+    ##-------------------------------------
+    ## This function uses Google's API directions to
+    ## calculate the driving distance between two arrays of points.
+    ## points is a list with each entry having:
+    ## origin  = geografic point in (latitude, longitude) format
+    ## destiny = geografic point in (latitude, longitude) format
+    ##-------------------------------------
+    distance <- laply(points, function(t) t <- get_num_distance(t[[1]],
+                                                              t[[2]]))
+    distance
+}
+
+
+
+##-------------------------------------
 ## get_altitude
 ##-------------------------------------
 get_altitude <- function(locations){
