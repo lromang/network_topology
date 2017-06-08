@@ -98,6 +98,19 @@ get_num_distance_bulk <- function(points, mode = 'driving'){
 }
 
 
+##-------------------------------------
+## get distance bulk df
+##-------------------------------------
+get_num_distance_bulk_df <- function(origins, destinies, mode = 'driving'){
+    all_points <- list()
+    for(i in 1:nrow(origins)){
+        point <- list('origin'  = origins[i,],
+                     'destiny' = destinies[i,])
+        all_points[[i]] <- point
+    }
+    get_num_distance_bulk(all_points)
+}
+
 
 ##-------------------------------------
 ## get_altitude
