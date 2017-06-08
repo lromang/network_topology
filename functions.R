@@ -28,7 +28,7 @@ library(rgdal)
 ##-------------------------------------
 ## get_directions
 ##-------------------------------------
-get_directions <- function(origen, destino, mode = "driving"){
+get_directions <- function(origin, destino, mode = "driving"){
     ##-------------------------------------
     ## This function uses Google's API directions to
     ## calculate the driving directions between two given points.
@@ -54,6 +54,32 @@ get_directions <- function(origen, destino, mode = "driving"){
         "end_loc"    = ldply(steps, function(t)t <- t$end_location)
         )
 }
+
+##-------------------------------------
+## get distance
+##-------------------------------------
+get_num_distance <- function(origin, destiny, mode = 'driving'){
+    ##-------------------------------------
+    ## This function uses Google's API directions to
+    ## calculate the driving distance between two given points.
+    ## origin  = geografic point in (latitude, longitude) format
+    ## destiny = geografic point in (latitude, longitude) format
+    ##-------------------------------------
+    base        <- "https://maps.googleapis.com/maps/api/directions/json?"
+    origin      <- paste0("origin=",
+                         paste(origin, collapse = ",")
+                         )
+    destiny     <- paste0("destination=",
+                         paste(destiny, collapse = ",")
+                         )
+    mode        <- paste0("mode=", mode)
+    key         <- "key=AIzaSyAkW2m1J6oq_UblEtwhzVB9EYmz7Ayc4k0"
+    query       <- paste(base, origin, destiny, mode, key, sep = "&")
+    route       <- fromJSON(getURL(query))$routes[[1]]$legs[[1]]$distance$value
+    route
+}
+
+
 
 ##-------------------------------------
 ## get_altitude

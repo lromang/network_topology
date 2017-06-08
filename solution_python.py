@@ -17,7 +17,6 @@ import pickle
 from scipy.spatial import Voronoi, voronoi_plot_2d
 import matplotlib.pyplot as plt
 
-
 ########################### Flags ##############################
 UPDATE_DATA = False
 
@@ -33,8 +32,6 @@ MEDIUM_POPULATION = 1000
 SMALL_POPULATION = 100
 MIN_NETWORK_PARM = 11
 
-
-# In[138]:
 
 #Read data from censo cvs
 labels = ["idx","ent","mun","nom_mun","nom_loc","lon","lat","pob"]
@@ -127,7 +124,7 @@ net_type_big = [item for item in net_type_big if len(item)  >= MIN_NETWORK_PARM]
 # Reliability of each station
 relia_big = [item[RELIABILITY] for item in net_type_big]
 
-#Voronoi with library                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+#Voronoi with library
 vor = Voronoi(zip(big_towns['lat'].values, big_towns['lon'].values))
 voronoi_plot_2d(vor)
 plt.show()
