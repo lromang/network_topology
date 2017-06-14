@@ -21,6 +21,7 @@ library(maptools)
 library(spatstat)
 library(rgeos)
 library(rgdal)
+library(cluster)
 ########################################
 ## Functions
 ########################################
@@ -97,17 +98,77 @@ get_distance_matrix <- function(points, mode = 'driving'){
     ## Upper triangular matrix with driving distance
     ## between the points.
     ##-------------------------------------
-    dist_matrix <- data.frame(matrix(nrow = nrow(points),
-                                    ncol = nrow(points)))
+    dist_matrix <- matrix(nrow = nrow(points),
+                                    ncol = nrow(points))
     ## Fill in matrix
     for(i in 1:(nrow(points) - 1)){
         for(j in (i + 1):nrow(points)){
             dist_matrix[i, j] <- get_num_distance(points[i, ], points[j, ], mode)
+            dist_matrix[j, i] <- dist_matrix[i, j]
         }
     }
+    ## Diag = 0
+    diag(dist_matrix) <- 0
+    ## Dissimilarity object
+    dist_matrix <- as.dist(dist_matrix)
     ## Return matrix
     dist_matrix
 }
+
+##-------------------------------------
+## get clusts
+##-------------------------------------
+get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
+    ##-------------------------------------
+    ## This function uses Google's API directions to
+    ## calculate the driving distance between each point.
+    ## and then creates the clusters
+    ## points  = geografic points in (latitude, longitude) format
+    ## RETURNS list with 3 entries:
+    ## entry 1 = distance matrix with driving distance
+    ## between the points.
+    ## entry 2 = clusters
+    ## entry 3 = plot of clusters
+    ##-------------------------------------
+    names(points) <- c('lat', 'lon')
+    ## Distance matrix
+    dist_m <- get_distance_matrix(points, mode)
+    ## Clusters
+    clusts <- pam(dist_m, diss = TRUE, k = nclusts)
+    ## plot
+    points$cluster <- as.factor(clusts$clustering)
+    clust_plot <- ggplot(data = points,
+                        aes(x   = lon,
+                            y   = lat,
+                            col = cluster)) +
+        geom_point(size = 1,
+                   alpha = .7) +
+        theme(panel.background = element_blank(),
+              axis.title = element_text(face = "bold",
+                                        color = "#1972b9"),
+              legend.title = element_text(face = "bold",
+                                          color = "#424242"),
+              panel.grid.major = element_line(colour = "#BDBDBD",
+                                              linetype = "dotted"),
+              panel.grid.minor = element_line(colour = "#E0E0E0",
+                                              linetype = "dotted")) +
+        ylab("Lat") + xlab("Lon") +
+        scale_colour_discrete(name = "Clusters")
+    print(clust_plot)
+    ## Result
+    result <- list()
+    result[[1]] <- dist_m
+    result[[2]] <- clusts$clustering
+    result[[3]] <- clust_plot
+    ## Return
+    result
+}
+
+
+
+##-------------------------------------
+## Clustering on custom metric
+##-------------------------------------
 
 
 ##-------------------------------------
