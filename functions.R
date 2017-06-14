@@ -165,6 +165,10 @@ get_tree_clust <- function(tree_m, points){
 
 ##-------------------------------------
 ## get clusts
+## TO DO
+## - K-means based on population
+## Whish list
+## - Point's cloud perimeter
 ##-------------------------------------
 get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
     ##-------------------------------------
