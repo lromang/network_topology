@@ -98,22 +98,70 @@ get_distance_matrix <- function(points, mode = 'driving'){
     ## Upper triangular matrix with driving distance
     ## between the points.
     ##-------------------------------------
+    ## Tree Matrix
+    tree_matrix <- c()
+    ## Distance Matrix
     dist_matrix <- matrix(nrow = nrow(points),
                                     ncol = nrow(points))
-    ## Fill in matrix
+    ## Fill in matrices
     for(i in 1:(nrow(points) - 1)){
         for(j in (i + 1):nrow(points)){
+            ## Distance Matrix
             dist_matrix[i, j] <- get_num_distance(points[i, ], points[j, ], mode)
             dist_matrix[j, i] <- dist_matrix[i, j]
+            ## Tree Matrix
+            tree_matrix         <- rbind(tree_matrix,
+                                        data.frame(
+                                            'x'    = points[i, 2],
+                                            'y'    = points[i, 1],
+                                            'xend' = points[j, 2],
+                                            'yend' = points[j, 1],
+                                            'p'    = dist_matrix[i, j]
+                                        ))
+            ## Make sure of simmetry
+            tree_matrix         <- rbind(tree_matrix,
+                                        data.frame(
+                                            'xend'  = points[i, 2],
+                                            'yend'  = points[i, 1],
+                                            'x'     = points[j, 2],
+                                            'y'     = points[j, 1],
+                                            'p'     = dist_matrix[i, j]
+                                        ))
         }
     }
     ## Diag = 0
     diag(dist_matrix) <- 0
     ## Dissimilarity object
     dist_matrix <- as.dist(dist_matrix)
-    ## Return matrix
-    dist_matrix
+    ## Result
+    result <- list()
+    result[[1]] <- dist_matrix
+    result[[2]] <- tree_matrix
+    ## Return
+    result
 }
+
+##-------------------------------------
+## get tree clust
+##-------------------------------------
+get_tree_clust <- function(tree_m, points){
+    tree_m$cluster <- NA
+    clustered_tree <- c()
+    for(i in unique(points$cluster)){
+        data_clust <- dplyr::filter(points, cluster == i)
+        for(j in 1:nrow(data_clust)){
+            tree_origins <- dplyr::filter(tree_m,
+                                         x == data_clust$lon[j] &
+                                         y == data_clust$lat[j])
+            in_clust <- which(tree_origins$xend %in% data_clust$lon &
+                             tree_origins$yend %in% data_clust$lat)
+            tree_origins$cluster[in_clust] <- i
+            clustered_tree <- rbind(clustered_tree, na.omit(tree_origins))
+        }
+    }
+    clustered_tree
+}
+
 
 ##-------------------------------------
 ## get clusts
@@ -131,8 +179,10 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
     ## entry 3 = plot of clusters
     ##-------------------------------------
     names(points) <- c('lat', 'lon')
-    ## Distance matrix
-    dist_m <- get_distance_matrix(points, mode)
+    ## Distance & Tree matrices
+    dist_tree <- get_distance_matrix(points, mode)
+    dist_m    <- dist_tree[[1]]
+    tree_m    <- dist_tree[[2]]
     ## Clusters
     clusts <- pam(dist_m, diss = TRUE, k = nclusts)
     ## plot
@@ -154,6 +204,19 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
                                               linetype = "dotted")) +
         ylab("Lat") + xlab("Lon") +
         scale_colour_discrete(name = "Clusters")
+    ## Add Trees
+    for(i in unique(m_tree$cluster)){
+        prim_clust <- prim(dplyr::filter(tree_clust, cluster == i))
+        clust_plot <- clust_plot +
+            geom_segment(
+                data = prim_clust,
+                aes(x = x, y = y, xend = xend, yend = yend),
+                col = "gray",
+                linetype = 2
+            )
+    }
+
+    ##
     print(clust_plot)
     ## Result
     result <- list()
@@ -164,6 +227,10 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
     result
 }
 
+
+p <- ahull(points[points$clusters == 5, 1],
+          points[points$clusters == 5, 2], alpha = 2.5)
+plot(p)
 
 
 ##-------------------------------------
