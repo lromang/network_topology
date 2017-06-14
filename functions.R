@@ -82,8 +82,32 @@ get_num_distance <- function(origin, destiny, mode = 'driving'){
     ## route
     distance    <- readr::parse_number(readLines('tmp.txt'))
     system('rm tmp.txt')
+    distance
 }
 
+##-------------------------------------
+## get distance matrix
+##-------------------------------------
+get_distance_matrix <- function(points, mode = 'driving'){
+    ##-------------------------------------
+    ## This function uses Google's API directions to
+    ## calculate the driving distance between each point.
+    ## points  = geografic points in (latitude, longitude) format
+    ## RETURNS:
+    ## Upper triangular matrix with driving distance
+    ## between the points.
+    ##-------------------------------------
+    dist_matrix <- data.frame(matrix(nrow = nrow(points),
+                                    ncol = nrow(points)))
+    ## Fill in matrix
+    for(i in 1:(nrow(points) - 1)){
+        for(j in (i + 1):nrow(points)){
+            dist_matrix[i, j] <- get_num_distance(points[i, ], points[j, ], mode)
+        }
+    }
+    ## Return matrix
+    dist_matrix
+}
 
 
 ##-------------------------------------
