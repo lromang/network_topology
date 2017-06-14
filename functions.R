@@ -205,8 +205,9 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
         ylab("Lat") + xlab("Lon") +
         scale_colour_discrete(name = "Clusters")
     ## Add Trees
-    for(i in unique(m_tree$cluster)){
-        prim_clust <- prim(dplyr::filter(tree_clust, cluster == i))
+    tree_cluster_filter <- get_tree_clust(tree_m, points)
+    for(i in unique(tree_cluster_filter$cluster)){
+        prim_clust <- prim(dplyr::filter(tree_cluster_filter, cluster == i))
         clust_plot <- clust_plot +
             geom_segment(
                 data = prim_clust,
@@ -226,17 +227,6 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
     ## Return
     result
 }
-
-
-p <- ahull(points[points$clusters == 5, 1],
-          points[points$clusters == 5, 2], alpha = 2.5)
-plot(p)
-
-
-##-------------------------------------
-## Clustering on custom metric
-##-------------------------------------
-
 
 ##-------------------------------------
 ## get distance bulk
