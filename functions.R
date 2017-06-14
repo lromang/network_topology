@@ -75,8 +75,13 @@ get_num_distance <- function(origin, destiny, mode = 'driving'){
     mode        <- paste0("mode=", mode)
     key         <- "key=AIzaSyAkW2m1J6oq_UblEtwhzVB9EYmz7Ayc4k0"
     query       <- paste(base, origin, destiny, mode, key, sep = "&")
-    route       <- fromJSON(getURL(query))$routes[[1]]$legs[[1]]$distance$value
-    route
+    system(paste0("curl ", "'", query, "' | jq '.", "[\"routes\"][0][\"legs\"][0][\"distance\"][\"value\"]",
+                  "'",
+                 " > tmp.txt"))
+    ## route       <- RJSONIO::fromJSON(getURL(query))$routes[[1]]$legs[[1]]$distance$value
+    ## route
+    distance    <- readr::parse_number(readLines('tmp.txt'))
+    system('rm tmp.txt')
 }
 
 
