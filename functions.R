@@ -141,7 +141,7 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
                         aes(x   = lon,
                             y   = lat,
                             col = cluster)) +
-        geom_point(size = 1,
+        geom_point(size = 2,
                    alpha = .7) +
         theme(panel.background = element_blank(),
               axis.title = element_text(face = "bold",
