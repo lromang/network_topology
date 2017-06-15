@@ -166,6 +166,14 @@ get_tree_clust <- function(tree_m, points){
 ##-------------------------------------
 ## get clusts
 ## TO DO
+## - API de connectivity
+## - Euc cluste based on population inside
+## - box of connected node.
+## - Iterative voronoi???
+## - Municipio:
+##   - stats: Mean, Max pop, Min pop and thresholds.
+## - Distance matrxi based on clusters
+## - Clustering with centroids
 ## - K-means based on population
 ## Whish list
 ## - Point's cloud perimeter
