@@ -22,6 +22,7 @@ library(spatstat)
 library(rgeos)
 library(rgdal)
 library(cluster)
+library(WeightedCluster)
 ########################################
 ## Functions
 ########################################
@@ -183,20 +184,21 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
     ## This function uses Google's API directions to
     ## calculate the driving distance between each point.
     ## and then creates the clusters
-    ## points  = geografic points in (latitude, longitude) format
+    ## points  = geografic points in (latitude, longitude, poblation) format
     ## RETURNS list with 3 entries:
     ## entry 1 = distance matrix with driving distance
     ## between the points.
     ## entry 2 = clusters
     ## entry 3 = plot of clusters
     ##-------------------------------------
-    names(points) <- c('lat', 'lon')
+    names(points) <- c('lat', 'lon','pob')
     ## Distance & Tree matrices
     dist_tree <- get_distance_matrix(points, mode)
     dist_m    <- dist_tree[[1]]
     tree_m    <- dist_tree[[2]]
     ## Clusters
-    clusts <- pam(dist_m, diss = TRUE, k = nclusts)
+    #clusts <- pam(dist_m, diss = TRUE, k = nclusts)
+    clusts  <- wcKMedoids(dist_m, k = nclusts, weights=points$pob)
     ## plot
     points$cluster <- as.factor(clusts$clustering)
     clust_plot <- ggplot(data = points,
