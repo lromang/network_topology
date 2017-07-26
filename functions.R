@@ -270,7 +270,6 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
 get_euc_vor <- function(data,
                        coord_cols     = 1:2,
                        prop           = .1){
-    results   <- list()
     centroids <- floor(nrow(data)*prop)
     clusts    <- kmeans(data[,coord_cols],
                        centers = centroids)
@@ -279,25 +278,37 @@ get_euc_vor <- function(data,
     voronoi   <- deldir(clusts$centers[,1],
                        clusts$centers[,2])
     ## Plot
-    ggplot(data = data, aes(x = lon,
-                            y = lat,
-                            size = pob,
-                            col  = clusts)) +
+    voro_plot <- ggplot(data = data,
+                       aes(x = lon,
+                           y = lat,
+                           size = pob,
+                           col  = clusts)) +
         geom_point() +
-         geom_segment(
-             aes(x = x1, y = y1,
-                 xend = x2, yend = y2),
-             size     = 1,
-             data     = voronoi$dirsgs,
-             linetype = 1,
-             color    = "#9E9E9E") +
+        geom_segment(
+            aes(x    = x1,
+                y    = y1,
+                xend = x2,
+                yend = y2),
+            size     = 1,
+            data     = voronoi$dirsgs,
+            linetype = 1,
+            color    = "#9E9E9E") +
     theme(panel.background = element_blank(),
-          legend.position  = 'none')
+          axis.title = element_text(face = "bold",
+                                    color = "#1972b9"),
+          legend.position  = 'none',
+          panel.grid.major = element_line(colour = "#BDBDBD",
+                                          linetype = "dotted"),
+          panel.grid.minor = element_line(colour = "#E0E0E0",
+                                          linetype = "dotted")) +
+    ylab("V2") + xlab("V1")
+    print(voro_plot)
     ## ------------------------------
     ## Per Cluster
     ## ------------------------------
     ## Get optimal number of clusters
-    n_clusts <- c()
+    n_clusts   <- c()
+    all_clusts <- list()
     for(clust in unique(data$clusts)){
         clust_data      <- data[data$clusts == clust,1:2]
         n_clusts[clust] <- tryCatch({
@@ -309,8 +320,12 @@ get_euc_vor <- function(data,
         }
         )
         print(clust)
+        ##
+        all_clusts[[clust]] <- get_clusts(data,
+                                         nclusts[clust],
+                                         mode = 'driving')
     }
-
+    all_clusts
 }
 
 
