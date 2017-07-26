@@ -217,18 +217,16 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
     ## plot
     points$cluster <- as.factor(clusts$clustering)
 
-    base_map = get_map( location=c(min(points$lon),min(points$lat),
-                                  max(points$lon),max(points$lat)),
-                        zoom=11, maptype="roadmap")
+    ## base_map = get_map(location = c(min(points$lon),min(points$lat),
+    ##                                max(points$lon),max(points$lat)),
+    ##                   zoom=11, maptype="roadmap")
 
-    aux_map = ggmap(base_map)
-    clust_plot <- aux_map +
-        geom_point(data=points,
-                  aes(x   = lon,
-                  y   = lat,
-                  col = cluster),
-                  size = 2,
-                  alpha = .7) +
+    ## aux_map = ggmap(base_map)
+    clust_plot <- ggplot(data=points,
+                            aes(x   = lon,
+                                y   = lat,
+                                col = cluster)) +
+        geom_point(size = 2, alpha = .7) +
         theme(panel.background = element_blank(),
               axis.title = element_text(face = "bold",
                                         color = "#1972b9"),
@@ -284,6 +282,12 @@ get_euc_vor <- function(data,
                            size = pob,
                            col  = clusts)) +
         geom_point() +
+        geom_point(data  = data.frame(clusts$centers),
+                   aes(x = lon,
+                       y = lat),
+                   col   = 'black',
+                   alpha = .8,
+                   size  = 1) +
         geom_segment(
             aes(x    = x1,
                 y    = y1,
@@ -310,7 +314,8 @@ get_euc_vor <- function(data,
     n_clusts   <- c()
     all_clusts <- list()
     for(clust in unique(data$clusts)){
-        clust_data      <- data[data$clusts == clust,1:2]
+        clust_data      <- data[data$clusts == clust,
+                               c(2,1,3)]
         n_clusts[clust] <- tryCatch({
             pamk(clust_data)$nc
         },error   = function(e){
@@ -319,11 +324,12 @@ get_euc_vor <- function(data,
             floor(nrow(clust_data)/2)
         }
         )
-        print(clust)
+        print(n_clusts[clust])
         ##
-        all_clusts[[clust]] <- get_clusts(data,
-                                         nclusts[clust],
-                                         mode = 'driving')
+        all_clusts[[clust]]
+        test <- get_clusts(clust_data,
+                          n_clusts[clust],
+                          mode = 'driving')
     }
     all_clusts
 }
@@ -366,7 +372,7 @@ prim <- function(G){
     k       <- 1
     ## Start iteration
     while(k <= (n_nodes - 1)){
-p    candidates <- dplyr::filter(G, id_o %in% V0 & !(id_d %in% V0))
+    candidates <- dplyr::filter(G, id_o %in% V0 & !(id_d %in% V0))
     enter      <- candidates[which(candidates$p == min(candidates$p))[1], ]
     T          <- rbind(T, enter)
     V0         <- c(V0, enter$id_d)
