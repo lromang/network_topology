@@ -30,6 +30,13 @@ library(rgdal)
 library(cluster)
 library(WeightedCluster)
 library(ggmap)
+## Clustering
+library(kernlab)
+library(dbscan)
+library(EMCluster)
+library(clValid)
+library(fpc)
+
 ########################################
 ## Functions
 ########################################
@@ -258,6 +265,56 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
 }
 
 ##-------------------------------------
+## euc voronoi
+##-------------------------------------
+get_euc_vor <- function(data,
+                       coord_cols     = 1:2,
+                       prop           = .1){
+    results   <- list()
+    centroids <- floor(nrow(data)*prop)
+    clusts    <- kmeans(data[,coord_cols],
+                       centers = centroids)
+    data$clusts <- as.factor(clusts$cluster)
+    ## Voronoi using clusters
+    voronoi   <- deldir(clusts$centers[,1],
+                       clusts$centers[,2])
+    ## Plot
+    ggplot(data = data, aes(x = lon,
+                            y = lat,
+                            size = pob,
+                            col  = clusts)) +
+        geom_point() +
+         geom_segment(
+             aes(x = x1, y = y1,
+                 xend = x2, yend = y2),
+             size     = 1,
+             data     = voronoi$dirsgs,
+             linetype = 1,
+             color    = "#9E9E9E") +
+    theme(panel.background = element_blank(),
+          legend.position  = 'none')
+    ## ------------------------------
+    ## Per Cluster
+    ## ------------------------------
+    ## Get optimal number of clusters
+    n_clusts <- c()
+    for(clust in unique(data$clusts)){
+        clust_data      <- data[data$clusts == clust,1:2]
+        n_clusts[clust] <- tryCatch({
+            pamk(clust_data)$nc
+        },error   = function(e){
+            floor(nrow(clust_data)/2)
+        },warning = function(w){
+            floor(nrow(clust_data)/2)
+        }
+        )
+        print(clust)
+    }
+
+}
+
+
+##-------------------------------------
 ## get_altitude
 ##-------------------------------------
 get_altitude <- function(locations){
@@ -294,7 +351,7 @@ prim <- function(G){
     k       <- 1
     ## Start iteration
     while(k <= (n_nodes - 1)){
-    candidates <- dplyr::filter(G, id_o %in% V0 & !(id_d %in% V0))
+p    candidates <- dplyr::filter(G, id_o %in% V0 & !(id_d %in% V0))
     enter      <- candidates[which(candidates$p == min(candidates$p))[1], ]
     T          <- rbind(T, enter)
     V0         <- c(V0, enter$id_d)
@@ -308,7 +365,7 @@ prim <- function(G){
 ##########          MAIN       ################
 ###############################################
 
-data <- read.csv("./pob/data/dataCenso.csv", stringsAsFactors = FALSE)
+data <- read.csv("./data/dataCenso.csv", stringsAsFactors = FALSE)
 data[,1] <- NULL
 names(data) <- c("ent",
                 "mun",
@@ -318,6 +375,11 @@ names(data) <- c("ent",
                 "lat",
                 "pob")
 
-selec <- dplyr::filter(data, ent %in% c("7"))
-points <- selec[seq(1,10),c("lat","lon","pob")]
-get_clusts(points)
+## Work with Aguascalientes
+ags_mun    <- dplyr::filter(data, nom_mun == 'Aguascalientes')
+ags_points <- dplyr::select(ags_mun, lon, lat, pob)
+
+## Get voronoi with euclidean distance
+
+## For each Sub division apply get_clusts
+get_clusts(ags_points)
