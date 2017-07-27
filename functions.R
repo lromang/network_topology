@@ -242,11 +242,14 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
     tree_cluster_filter <- get_tree_clust(tree_m, points)
     ## Get length of trees
     trees_length        <- c()
-    k                   <- 0
+    k                   <- 1
     for(i in unique(tree_cluster_filter$cluster)){
-        prim_clust <- prim(dplyr::filter(tree_cluster_filter, cluster == i))
+        prim_clust      <- prim(dplyr::filter(tree_cluster_filter,
+                                             cluster == i))
+        ## length of tree
         trees_length[k] <- sum(prim_clust$p)
-        clust_plot <- clust_plot +
+        k               <- k + 1
+        clust_plot      <- clust_plot +
             geom_segment(
                 data = prim_clust,
                 aes(x = x, y = y, xend = xend, yend = yend),
@@ -331,7 +334,8 @@ get_euc_vor <- function(data,
         )
         print(n_clusts[clust])
         ##
-        all_clusts[[clust]] <- get_clusts(clust_data,
+        all_clusts[[clust]]
+        test <- get_clusts(clust_data,
                                          n_clusts[clust],
                                          mode = 'driving')
     }
