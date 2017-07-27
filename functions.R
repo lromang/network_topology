@@ -334,8 +334,7 @@ get_euc_vor <- function(data,
         )
         print(n_clusts[clust])
         ##
-        all_clusts[[clust]]
-        test <- get_clusts(clust_data,
+        all_clusts[[clust]] <- get_clusts(clust_data,
                                          n_clusts[clust],
                                          mode = 'driving')
     }
@@ -409,6 +408,7 @@ ags_mun    <- dplyr::filter(data, nom_mun == 'Aguascalientes')
 ags_points <- dplyr::select(ags_mun, lon, lat, pob)
 
 ## Get voronoi with euclidean distance
-
-## For each Sub division apply get_clusts
-get_clusts(ags_points)
+test_data <- ags_points[1:50, ]
+test_vor <- get_euc_vor(test_data,
+                       coord_cols = 1:2,
+                       prop       = .1)
