@@ -276,11 +276,15 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
 get_euc_vor <- function(data,
                        coord_cols     = 1:2,
                        prop           = .1){
+    ## Results
+    results   <- list()
+    ## Number of centroids
     centroids <- floor(nrow(data)*prop)
+    ## Kmeans with euclidean distance
     clusts    <- kmeans(data[,coord_cols],
                        centers = centroids)
     data$clusts <- as.factor(clusts$cluster)
-    ## Voronoi using clusters
+    ## Voronoi around centroids of k-means
     voronoi   <- deldir(clusts$centers[,1],
                        clusts$centers[,2])
     ## Plot
@@ -315,6 +319,8 @@ get_euc_vor <- function(data,
                                           linetype = "dotted")) +
     ylab("V2") + xlab("V1")
     print(voro_plot)
+    ## Add plot to results
+    results[[1]] <- voro_plot
     ## ------------------------------
     ## Per Cluster
     ## ------------------------------
@@ -338,7 +344,10 @@ get_euc_vor <- function(data,
                                          n_clusts[clust],
                                          mode = 'driving')
     }
-    all_clusts
+    ## Add all_clusts to results
+    results[[2]] <- all_clusts
+    ## Return results
+    results
 }
 
 
