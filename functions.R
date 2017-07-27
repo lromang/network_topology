@@ -240,8 +240,12 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
         scale_colour_discrete(name = "Clusters")
     ## Add Trees
     tree_cluster_filter <- get_tree_clust(tree_m, points)
+    ## Get length of trees
+    trees_length        <- c()
+    k                   <- 0
     for(i in unique(tree_cluster_filter$cluster)){
         prim_clust <- prim(dplyr::filter(tree_cluster_filter, cluster == i))
+        trees_length[k] <- sum(prim_clust$p)
         clust_plot <- clust_plot +
             geom_segment(
                 data = prim_clust,
@@ -258,6 +262,7 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
     result[[1]] <- dist_m
     result[[2]] <- clusts$clustering
     result[[3]] <- clust_plot
+    result[[4]] <- trees_length
     ## Return
     result
 }
@@ -326,10 +331,9 @@ get_euc_vor <- function(data,
         )
         print(n_clusts[clust])
         ##
-        all_clusts[[clust]]
-        test <- get_clusts(clust_data,
-                          n_clusts[clust],
-                          mode = 'driving')
+        all_clusts[[clust]] <- get_clusts(clust_data,
+                                         n_clusts[clust],
+                                         mode = 'driving')
     }
     all_clusts
 }
