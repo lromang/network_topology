@@ -42,7 +42,24 @@ ags_mun    <- dplyr::filter(data, nom_mun == 'Aguascalientes')
 ags_points <- dplyr::select(ags_mun, lon, lat, pob)
 
 ## Get voronoi with euclidean distance
-distance_matrix <- new.env(hash=TRUE)
+if (!file.exists("distance_matrix.RData")) { 
+    distance_matrix <- new.env(hash=TRUE)
+}else {
+    attach("distance_matrix.RData")
+}
 test_data <- ags_points[1:50, ]
 
-test_vor <- get_cluster_voronoi(test_data, distance_matrix, coord_cols = 1:2, prop       = .1)
+total_result <- c()
+for (centroids in c(1000,500,200,50,5,2)) {
+    if (centroids < length(test_data[[1]])) {
+    test_vor <- get_cluster_voronoi(test_data, 
+                                distance_matrix, 
+                                coord_cols = 1:2,
+                                centroids 
+                                )
+    total_result <- rbind(total_result, test_vor)
+    }
+}
+
+save(distance_matrix, file = "distance_matrix.RData")
+

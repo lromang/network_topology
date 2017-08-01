@@ -1,7 +1,9 @@
+google_keys <-  readLines('google_keys.key')
+
 ##-------------------------------------
 ## get distance
 ##-------------------------------------
-get_num_distance <- function(origin, destiny,distance_matrix, mode = 'driving'){
+get_num_distance <- function(origin, destiny,distance_matrix, mode = 'driving', key= google_keys[1]){
     ##-------------------------------------
     ## This function uses Google's API directions to
     ## calculate the driving distance between two given points.
@@ -11,8 +13,8 @@ get_num_distance <- function(origin, destiny,distance_matrix, mode = 'driving'){
     #Check if origin destiny is in dataframe
     key_part1 <- paste(origin, collapse = ",")
     key_part2 <- paste(destiny, collapse = ",")
-    key_1 <- paste(key_part1,key_part2, collapse ="|")
-    key_2 <- paste(key_part2,key_part1,collapse = "|")
+    key_1 <- paste0(key_part1,key_part2)
+    key_2 <- paste0(key_part2,key_part1)
     if ( !is.null(distance_matrix[[key_1]] )) {
       return (distance_matrix[[key_1]])
     }
@@ -23,7 +25,7 @@ get_num_distance <- function(origin, destiny,distance_matrix, mode = 'driving'){
     origin      <- paste0("origin=",paste(origin, collapse = ","))
     destiny     <- paste0("destination=",paste(destiny, collapse = ","))
     mode        <- paste0("mode=", mode)
-    key         <- "key=AIzaSyAkW2m1J6oq_UblEtwhzVB9EYmz7Ayc4k0"
+    key         <- paste0("key=",key)
     query       <- paste(base, origin, destiny, mode, key, sep = "&")
     system(paste0("curl ", "'", query, "' | jq '.", "[\"routes\"][0][\"legs\"][0][\"distance\"][\"value\"]",
     "'",

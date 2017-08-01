@@ -43,9 +43,15 @@ get_clusts <- function(points,distance_matrix,nclusts = 2,  mode = 'driving', wi
     tree_m    <- dist_tree[[2]]
     ## Clusters
     #clusts <- pam(dist_m, diss = TRUE, k = nclusts)
-    clusts  <- wcKMedoids(dist_m, k = nclusts, weights=points$pob)
+    if (nclusts > 1) {
+      clusts  <- wcKMedoids(dist_m, k = nclusts, weights=points$pob)
+      points$cluster <- as.factor(clusts$clustering)
+      clustering <- clusts$clustering
+    }else {
+      points$cluster <- as.factor(1)
+      clustering <- 1
+    }
     ## plot
-    points$cluster <- as.factor(clusts$clustering)
     if (with_map) {
       base_map = get_map(location = c(min(points$lon),min(points$lat),
                                       max(points$lon),max(points$lat)),
@@ -89,7 +95,7 @@ get_clusts <- function(points,distance_matrix,nclusts = 2,  mode = 'driving', wi
     ## Result
     result <- list()
     result[[1]] <- dist_m
-    result[[2]] <- clusts$clustering
+    result[[2]] <- clustering
     result[[3]] <- clust_plot
     result[[4]] <- trees_length
     ## Return
@@ -99,11 +105,9 @@ get_clusts <- function(points,distance_matrix,nclusts = 2,  mode = 'driving', wi
 ##-------------------------------------
 ## euc voronoi
 ##-------------------------------------
-get_euclidean_vor <- function(data,coord_cols= 1:2,prop = .1){
+get_euclidean_vor <- function(data,coord_cols= 1:2,centroids=20){
     ## Results
     results   <- list()
-    ## Number of centroids
-    centroids <- floor(nrow(data)*prop)
     ## Kmeans with euclidean distance
     clusts    <- kmeans(data[,coord_cols],centers = centroids)
     data$clusts <- as.factor(clusts$cluster)
@@ -155,15 +159,10 @@ get_optimal_cluster <- function(data, distance_matrix) {
         }
         )
         print(n_clusts[clust])
-        ## IF n clusts != 1
-        if(n_clusts[clust] != 1){
-            all_clusts[[clust]] <- get_clusts(clust_data,
+        all_clusts[[clust]] <- get_clusts(clust_data,
                                              distance_matrix,
                                              n_clusts[clust],
                                              mode = 'driving')
-        }else{
-            ##
-        }
     }
     ## Add all_clusts to results
     all_clusts
@@ -174,8 +173,8 @@ get_optimal_cluster <- function(data, distance_matrix) {
 ##-------------------------------------
 ## get cluster voronoi
 ##-------------------------------------
-get_cluster_voronoi <- function(data,distance_matrix,coord_cols= 1:2,prop = .1){
-  result <- get_euclidean_vor(data, coord_cols, prop)
+get_cluster_voronoi <- function(data,distance_matrix,coord_cols= 1:2,centroids){
+  result <- get_euclidean_vor(data, coord_cols, centroids)
   result[[2]] <- get_optimal_cluster(result[[2]], distance_matrix)
   result
 }
