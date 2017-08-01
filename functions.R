@@ -421,3 +421,9 @@ test_data <- ags_points[1:50, ]
 test_vor  <- get_euc_vor(test_data,
                         coord_cols = 1:2,
                         prop       = .1)
+
+## Plot tree_lengths
+t_lengths <- data.frame(
+    'tree_lengths' = laply(test_vor[[2]],function(t)t <- sum(t[[4]])),
+    'n_tree'       = laply(test_vor[[2]],function(t)t <- length(t[[4]]))
+    )
