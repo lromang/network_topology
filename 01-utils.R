@@ -11,13 +11,13 @@ get_num_distance <- function(origin, destiny,distance_matrix, mode = 'driving'){
     #Check if origin destiny is in dataframe
     key_part1 <- paste(origin, collapse = ",")
     key_part2 <- paste(destiny, collapse = ",")
-    key_1 <- paste(key_part1,key_part2, collapse"|")
-    key_2 <- paste(key_part2,key_part1, collapse"|")
+    key_1 <- paste(key_part1,key_part2, collapse ="|")
+    key_2 <- paste(key_part2,key_part1,collapse = "|")
     if ( !is.null(distance_matrix[[key_1]] )) {
-      return distance_matrix[[key_1]]
+      return (distance_matrix[[key_1]])
     }
     if (!is.null(distance_matrix[[key_2]])) {
-      return distance_matrix[[key_2]]
+      return (distance_matrix[[key_2]])
     }
     base        <- "https://maps.googleapis.com/maps/api/directions/json?"
     origin      <- paste0("origin=",paste(origin, collapse = ","))

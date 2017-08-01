@@ -44,6 +44,5 @@ ags_points <- dplyr::select(ags_mun, lon, lat, pob)
 ## Get voronoi with euclidean distance
 distance_matrix <- new.env(hash=TRUE)
 test_data <- ags_points[1:50, ]
-test_vor <- get_cluster_voronoi(test_data, distance_matrix,
-                       coord_cols = 1:2,
-                       prop       = .1)
+
+test_vor <- get_cluster_voronoi(test_data, distance_matrix, coord_cols = 1:2, prop       = .1)

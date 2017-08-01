@@ -156,7 +156,8 @@ get_optimal_cluster <- function(data, distance_matrix) {
         )
         print(n_clusts[clust])
         ##
-        all_clusts[[clust]] <- get_clusts(clust_data,distance_matrix
+        all_clusts[[clust]] <- get_clusts(clust_data,
+                                         distance_matrix,
                                          n_clusts[clust],
                                          mode = 'driving')
     }
