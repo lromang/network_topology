@@ -418,6 +418,6 @@ ags_points <- dplyr::select(ags_mun, lon, lat, pob)
 
 ## Get voronoi with euclidean distance
 test_data <- ags_points[1:50, ]
-test_vor <- get_euc_vor(test_data,
-                       coord_cols = 1:2,
-                       prop       = .1)
+test_vor  <- get_euc_vor(test_data,
+                        coord_cols = 1:2,
+                        prop       = .1)

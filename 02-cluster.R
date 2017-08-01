@@ -149,17 +149,21 @@ get_optimal_cluster <- function(data, distance_matrix) {
         n_clusts[clust] <- tryCatch({
             pamk(clust_data)$nc
         },error   = function(e){
-            floor(nrow(clust_data)/2)
+            1 ## floor(nrow(clust_data)/2)
         },warning = function(w){
-            floor(nrow(clust_data)/2)
+            1 ## floor(nrow(clust_data)/2)
         }
         )
         print(n_clusts[clust])
-        ##
-        all_clusts[[clust]] <- get_clusts(clust_data,
-                                         distance_matrix,
-                                         n_clusts[clust],
-                                         mode = 'driving')
+        ## IF n clusts != 1
+        if(n_clusts[clust] != 1){
+            all_clusts[[clust]] <- get_clusts(clust_data,
+                                             distance_matrix,
+                                             n_clusts[clust],
+                                             mode = 'driving')
+        }else{
+            ##
+        }
     }
     ## Add all_clusts to results
     all_clusts
