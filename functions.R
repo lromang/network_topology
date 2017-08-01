@@ -194,7 +194,7 @@ distance
 ## Whish list
 ## - Point's cloud perimeter
 ##-------------------------------------
-get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
+get_clusts <- function(points, nclusts = 2,  mode = 'driving', vor_plot = NULL){
     ##-------------------------------------
     ## This function uses Google's API directions to
     ## calculate the driving distance between each point.
@@ -222,7 +222,7 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
     ##                   zoom=11, maptype="roadmap")
 
     ## aux_map = ggmap(base_map)
-    clust_plot <- ggplot(data=points,
+    clust_plot <- ggplot(data        = points,
                             aes(x   = lon,
                                 y   = lat,
                                 col = cluster)) +
@@ -249,13 +249,16 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
         ## length of tree
         trees_length[k] <- sum(prim_clust$p)
         k               <- k + 1
-        clust_plot      <- clust_plot +
-            geom_segment(
-                data = prim_clust,
-                aes(x = x, y = y, xend = xend, yend = yend),
-                col = "gray",
-                linetype = 2
-            )
+        tree_plot       <- geom_segment(
+            data = prim_clust,
+            aes(x = x, y = y, xend = xend, yend = yend),
+            col = "gray",
+            linetype = 2
+        )
+        clust_plot      <- clust_plot + tree_plot
+        if(!is.null(vor_plot)){
+            vor_plot        <- vor_plot   + tree_plot
+        }
     }
 
     ##
@@ -266,6 +269,10 @@ get_clusts <- function(points, nclusts = 2,  mode = 'driving'){
     result[[2]] <- clusts$clustering
     result[[3]] <- clust_plot
     result[[4]] <- trees_length
+    ## Vor Plot
+    if(!is.null(vor_plot)){
+        result[[5]] <- vor_plot
+    }
     ## Return
     result
 }
@@ -342,10 +349,14 @@ get_euc_vor <- function(data,
         ##
         all_clusts[[clust]] <- get_clusts(clust_data,
                                          n_clusts[clust],
-                                         mode = 'driving')
+                                         mode = 'driving',
+                                         voro_plot)
+        ## Update vor_plot
+        voro_plot <- all_clusts[[clust]][[5]]
     }
     ## Add all_clusts to results
     results[[2]] <- all_clusts
+    results[[3]] <- voro_plot
     ## Return results
     results
 }
