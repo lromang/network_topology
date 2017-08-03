@@ -1,9 +1,9 @@
 google_keys <-  readLines('google_keys.key')
-
+this_key <- 1
 ##-------------------------------------
 ## get distance
 ##-------------------------------------
-get_num_distance <- function(origin, destiny,distance_matrix, mode = 'driving', key= google_keys[1]){
+get_num_distance <- function(origin, destiny,distance_matrix, mode = 'driving'){
     ##-------------------------------------
     ## This function uses Google's API directions to
     ## calculate the driving distance between two given points.
@@ -21,20 +21,43 @@ get_num_distance <- function(origin, destiny,distance_matrix, mode = 'driving', 
     if (!is.null(distance_matrix[[key_2]])) {
       return (distance_matrix[[key_2]])
     }
+    if (is.na(destiny[1])) {
+      return(0)
+    }
     base        <- "https://maps.googleapis.com/maps/api/directions/json?"
     origin      <- paste0("origin=",paste(origin, collapse = ","))
     destiny     <- paste0("destination=",paste(destiny, collapse = ","))
     mode        <- paste0("mode=", mode)
-    key         <- paste0("key=",key)
+    google_key  <- google_keys[this_key]
+    key         <- paste0("key=",google_key)
     query       <- paste(base, origin, destiny, mode, key, sep = "&")
     system(paste0("curl ", "'", query, "' | jq '.", "[\"routes\"][0][\"legs\"][0][\"distance\"][\"value\"]",
     "'",
-    " > tmp.txt"))
-    ## route       <- RJSONIO::fromJSON(getURL(query))$routes[[1]]$legs[[1]]$distance$value
-    ## route
-    distance    <- readr::parse_number(readLines('tmp.txt'))
-    system('rm tmp.txt')
-    distance_matrix[[key_1]] <- distance
+    " > intermedio.txt"))
+    distance    <- tryCatch ({
+                    readr::parse_number(readLines('intermedio.txt'))
+                   }, warning = function(w){ #problem with parse, try next key
+                     if (length(google_keys) >= this_key +1) { #We have another key to try
+                       this_key <<- this_key +1
+                       google_key  <- google_keys[this_key]
+                       key         <- paste0("key=",google_key)
+                       return(tryCatch({
+                          RJSONIO::fromJSON(getURL(query))$routes[[1]]$legs[[1]]$distance$value
+                       }, error = function(w){0}))
+                      }else {
+                        print("NO MAS REQUEST POR HOY")
+                        stopifnot(TRUE)
+                      } })
+
+    print(origin)
+    print(destiny)
+    print(distance)
+    if(distance > 0) {
+      distance_matrix[[key_1]] <- distance
+    }
+    if (file.exists("intermedio.txt")) {
+      system('rm intermedio.txt')
+    }
     distance
 
 }
