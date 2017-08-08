@@ -3,7 +3,7 @@ this_key <- 1
 ##-------------------------------------
 ## get distance
 ##-------------------------------------
-get_num_distance <- function(origin, destiny,distance_matrix, mode = 'driving'){
+get_num_distance <- function(origin, destiny,distance_matrix_, mode = 'driving'){
     ##-------------------------------------
     ## This function uses Google's API directions to
     ## calculate the driving distance between two given points.
@@ -15,11 +15,11 @@ get_num_distance <- function(origin, destiny,distance_matrix, mode = 'driving'){
     key_part2 <- paste(destiny, collapse = ",")
     key_1 <- paste0(key_part1,key_part2)
     key_2 <- paste0(key_part2,key_part1)
-    if ( !is.null(distance_matrix[[key_1]] )) {
-      return (distance_matrix[[key_1]])
+    if ( !is.null(distance_matrix_[[key_1]] )) {
+      return (distance_matrix_[[key_1]])
     }
-    if (!is.null(distance_matrix[[key_2]])) {
-      return (distance_matrix[[key_2]])
+    if (!is.null(distance_matrix_[[key_2]])) {
+      return (distance_matrix_[[key_2]])
     }
     if (is.na(destiny[1])) {
       return(0)
@@ -53,7 +53,7 @@ get_num_distance <- function(origin, destiny,distance_matrix, mode = 'driving'){
     print(destiny)
     print(distance)
     if(distance > 0) {
-      distance_matrix[[key_1]] <- distance
+      distance_matrix_[[key_1]] <- distance
     }
     if (file.exists("intermedio.txt")) {
       system('rm intermedio.txt')
@@ -65,7 +65,7 @@ get_num_distance <- function(origin, destiny,distance_matrix, mode = 'driving'){
 ##-------------------------------------
 ## get distance matrix
 ##-------------------------------------
-get_distance_matrix <- function(points, distance_matrix,mode = 'driving', coords_cols = 1:2){
+get_distance_matrix <- function(points, distance_matrix_,mode = 'driving', coords_cols = 1:2){
     ##-------------------------------------
     ## This function uses Google's API directions to
     ## calculate the driving distance between each point.
@@ -77,13 +77,19 @@ get_distance_matrix <- function(points, distance_matrix,mode = 'driving', coords
     ## Tree Matrix
     tree_matrix <- c()
     ## Distance Matrix
-    dist_matrix <- matrix(nrow = nrow(points),
-                                    ncol = nrow(points))
+    dist_matrix <- matrix(nrow = length(points[[1]]),
+                                    ncol = length(points[[1]]))
     ## Fill in matrices
-    for(i in 1:(nrow(points) - 1)){
-        for(j in (i + 1):nrow(points)){
+    for(i in 1:(length(points[[1]]) - 1)){
+        for(j in (i + 1):length(points[[1]])){
             ## Distance Matrix
-            dist_matrix[i, j] <- get_num_distance(points[i,coords_cols], points[j,coords_cols],distance_matrix ,mode)
+            if (points[i,coords_cols][[coords_cols[1]]] == points[j,coords_cols][[coords_cols[1]]] &&
+              points[i,coords_cols][[coords_cols[2]]] == points[j,coords_cols][[coords_cols[2]]]
+              ) {
+                next
+              }
+
+            dist_matrix[i, j] <- get_num_distance(points[i,coords_cols], points[j,coords_cols],distance_matrix_ ,mode)
             dist_matrix[j, i] <- dist_matrix[i, j]
             ## Tree Matrix
             tree_matrix         <- rbind(tree_matrix,
@@ -103,7 +109,8 @@ get_distance_matrix <- function(points, distance_matrix,mode = 'driving', coords
                                             'y'     = points[j, 1],
                                             'p'     = dist_matrix[i, j]
                                         ))
-        }
+
+      }
     }
     ## Diag = 0
     diag(dist_matrix) <- 0
