@@ -1,4 +1,7 @@
-#Entregables para el miercoles
+########################################
+########################################
+########################################
+## Entregables para el miercoles
 #  Escoger un municipio (Aguascalientes)  menor numero de poblados
 #  Correr muchas veces, -> 1000 clusters con distancias euclideana
 #                          500, 200, 100, 50 y correr el algoritmo
@@ -15,6 +18,9 @@
 ## - K-means based on population
 ## Whish list
 ## - Point's cloud perimeter
+########################################
+########################################
+########################################
 
 ########################################
 ## Libraries
@@ -27,8 +33,8 @@ source("02-cluster.R")
 ##########          MAIN       ################
 ###############################################
 
-data <- read.csv("./data/dataCenso.csv", stringsAsFactors = FALSE)
-data[,1] <- NULL
+data        <- read.csv("./data/dataCenso.csv", stringsAsFactors = FALSE)
+data[,1]    <- NULL
 names(data) <- c("ent",
                 "mun",
                 "nom_mun",
@@ -43,7 +49,7 @@ ags_points <- dplyr::select(ags_mun, lon, lat, pob)
 
 ## Get voronoi with euclidean distance
 if (!file.exists("distance_matrix.RData")) {
-    distance_matrix <- new.env(hash=TRUE)
+    distance_matrix <- new.env(hash = TRUE)
 }else {
     attach("distance_matrix.RData")
 }

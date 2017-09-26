@@ -167,7 +167,7 @@ destiny     <- paste0("destination=",
 paste(destiny, collapse = ",")
 )
 mode        <- paste0("mode=", mode)
-key         <- "key=AIzaSyAkW2m1J6oq_UblEtwhzVB9EYmz7Ayc4k0"
+key         <- "key=AIzaSyBc7q1hz9__Qx1xEKHEBlp2Hwka5a7Vf9s"
 query       <- paste(base, origin, destiny, mode, key, sep = "&")
 system(paste0("curl ", "'", query, "' | jq '.", "[\"routes\"][0][\"legs\"][0][\"distance\"][\"value\"]",
 "'",

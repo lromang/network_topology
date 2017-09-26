@@ -24,7 +24,7 @@ get_tree_clust <- function(tree_m, points){
 ##-------------------------------------
 ## get clusts
 ##-------------------------------------
-get_clusts <- function(points,distance_matrix_,nclusts = 2,  mode = 'driving', with_map=FALSE){
+get_clusts <- function(points, distance_matrix_, nclusts = 2,  mode = 'driving', with_map=FALSE){
     ##-------------------------------------
     ## This function uses Google's API directions to
     ## calculate the driving distance between each point.
@@ -44,9 +44,9 @@ get_clusts <- function(points,distance_matrix_,nclusts = 2,  mode = 'driving', w
     ## Clusters
     #clusts <- pam(dist_m, diss = TRUE, k = nclusts)
     if (nclusts > 1) {
-      clusts  <- wcKMedoids(dist_m, k = nclusts, weights=points$pob)
+      clusts         <- wcKMedoids(dist_m, k = nclusts, weights=points$pob)
       points$cluster <- as.factor(clusts$clustering)
-      clustering <- clusts$clustering
+      clustering     <- clusts$clustering
     }else {
       points$cluster <- as.factor(1)
       clustering <- 1

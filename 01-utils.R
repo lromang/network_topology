@@ -3,7 +3,7 @@ this_key <- 1
 ##-------------------------------------
 ## get distance
 ##-------------------------------------
-get_num_distance <- function(origin, destiny,distance_matrix_, mode = 'driving'){
+get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'){
     ##-------------------------------------
     ## This function uses Google's API directions to
     ## calculate the driving distance between two given points.
@@ -13,9 +13,9 @@ get_num_distance <- function(origin, destiny,distance_matrix_, mode = 'driving')
     #Check if origin destiny is in dataframe
     key_part1 <- paste(origin, collapse = ",")
     key_part2 <- paste(destiny, collapse = ",")
-    key_1 <- paste0(key_part1,key_part2)
-    key_2 <- paste0(key_part2,key_part1)
-    if ( !is.null(distance_matrix_[[key_1]] )) {
+    key_1     <- paste0(key_part1, key_part2)
+    key_2     <- paste0(key_part2, key_part1)
+    if (!is.null(distance_matrix_[[key_1]] )) {
       return (distance_matrix_[[key_1]])
     }
     if (!is.null(distance_matrix_[[key_2]])) {
@@ -25,11 +25,11 @@ get_num_distance <- function(origin, destiny,distance_matrix_, mode = 'driving')
       return(0)
     }
     base        <- "https://maps.googleapis.com/maps/api/directions/json?"
-    origin      <- paste0("origin=",paste(origin, collapse = ","))
-    destiny     <- paste0("destination=",paste(destiny, collapse = ","))
+    origin      <- paste0("origin=", paste(origin, collapse = ","))
+    destiny     <- paste0("destination=", paste(destiny, collapse = ","))
     mode        <- paste0("mode=", mode)
     google_key  <- google_keys[this_key]
-    key         <- paste0("key=",google_key)
+    key         <- paste0("key=", google_key)
     query       <- paste(base, origin, destiny, mode, key, sep = "&")
     system(paste0("curl ", "'", query, "' | jq '.", "[\"routes\"][0][\"legs\"][0][\"distance\"][\"value\"]",
     "'",
@@ -59,13 +59,12 @@ get_num_distance <- function(origin, destiny,distance_matrix_, mode = 'driving')
       system('rm intermedio.txt')
     }
     distance
-
 }
 
 ##-------------------------------------
 ## get distance matrix
 ##-------------------------------------
-get_distance_matrix <- function(points, distance_matrix_,mode = 'driving', coords_cols = 1:2){
+get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coords_cols = 1:2){
     ##-------------------------------------
     ## This function uses Google's API directions to
     ## calculate the driving distance between each point.
