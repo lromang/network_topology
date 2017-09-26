@@ -40,20 +40,21 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
     system(paste0("curl ", "'", query, "' | jq '.", "[\"routes\"][0][\"legs\"][0][\"distance\"][\"value\"]",
     "'",
     " > intermedio.txt"))
+
     distance    <- tryCatch ({
-                    readr::parse_number(readLines('intermedio.txt'))
-                   }, warning = function(w){ #problem with parse, try next key
-                     if (length(google_keys) >= this_key +1) { #We have another key to try
-                       this_key <<- this_key +1
-                       google_key  <- google_keys[this_key]
-                       key         <- paste0("key=",google_key)
-                       return(tryCatch({
-                          RJSONIO::fromJSON(getURL(query))$routes[[1]]$legs[[1]]$distance$value
-                       }, error = function(w){0}))
-                      }else {
-                        print("NO MAS REQUEST POR HOY")
-                        stopifnot(TRUE)
-                      } })
+                   readr::parse_number(readLines('intermedio.txt'))
+                  }, warning = function(w){ #problem with parse, try next key
+                    if (length(google_keys) >= this_key +1) { #We have another key to try
+                      this_key    <- this_key +1
+                      google_key  <- google_keys[this_key]
+                      key         <- paste0("key=",google_key)
+                      return(tryCatch({
+                         RJSONIO::fromJSON(getURL(query))$routes[[1]]$legs[[1]]$distance$value
+                      }, error = function(w){0}))
+                     }else {
+                       print("NO MAS REQUEST POR HOY")
+                       stopifnot(TRUE)
+                     } })
 
     print(origin)
     print(destiny)
