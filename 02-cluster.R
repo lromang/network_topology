@@ -42,14 +42,15 @@ get_clusts <- function(points, distance_matrix_, nclusts = 2,  mode = 'driving',
     dist_m    <- dist_tree[[1]]
     tree_m    <- dist_tree[[2]]
     ## Clusters
-    #clusts <- pam(dist_m, diss = TRUE, k = nclusts)
     if (nclusts > 1) {
-      clusts         <- wcKMedoids(dist_m, k = nclusts, weights=points$pob)
-      points$cluster <- as.factor(clusts$clustering)
-      clustering     <- clusts$clustering
-    }else {
-      points$cluster <- as.factor(1)
-      clustering <- 1
+        clusts         <- wcKMedoids(dist_m,
+                                    k = nclusts,
+                                    weights = points$pob)
+        points$cluster <- as.factor(clusts$clustering)
+        clustering     <- clusts$clustering
+    } else {
+        points$cluster <- as.factor(1)
+        clustering     <- 1
     }
     ## plot
     if (with_map) {
@@ -184,7 +185,7 @@ get_optimal_cluster <- function(data, distance_matrix_) {
 ##-------------------------------------
 ## get cluster voronoi
 ##-------------------------------------
-get_cluster_voronoi <- function(data,distance_matrix_,coord_cols= 1:2,centroids){
+get_cluster_voronoi <- function(data, distance_matrix_, coord_cols = 2:1, centroids){
   result      <- get_euclidean_vor(data, coord_cols, centroids)
   result[[2]] <- get_optimal_cluster(result[[2]], distance_matrix_)
   for (i in 1:length(result[[2]])){
@@ -192,3 +193,37 @@ get_cluster_voronoi <- function(data,distance_matrix_,coord_cols= 1:2,centroids)
   }
   result
 }
+
+##################################################
+##################################################
+############## ITERATIVE CLUSTERING ##############
+##################################################
+##################################################
+
+##-------------------------------------
+## Get Init Clustering
+##-------------------------------------
+init_clustering <- function(data, min_pop_centroids = 100){
+    centroids    <- min(100, nrow(data)/2) ## Minimum number of centroids
+    cluster_data <- data.table(data)
+    repeat{
+        init_clust           <- kmeans(cluster_data[, 2:1], centroids)
+        cluster_data$cluster <- init_clust$cluster
+        centroids            <- max(centroids/2, 2)
+        min_pop_clust        <- min(cluster_data[,sum(pob),by = cluster]$V1)
+        if(min_pop_clust > min_pop_centroids){
+            print('Min pop clust')
+            print(min_pop_clust)
+            break
+        }
+    }
+    cluster_data
+}
+
+##-------------------------------------
+## iterative clustering
+##-------------------------------------
+iterative_clustering <- function(data, distance_matrix_, min_pop_centroids = 1000){
+    
+}
+

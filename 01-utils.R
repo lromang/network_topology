@@ -79,8 +79,9 @@ get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coor
     ## calculate the driving distance between each point.
     ## points  = geografic points in (latitude, longitude) format
     ## RETURNS:
-    ## Upper triangular matrix with driving distance
+    ## 1.- Upper triangular matrix with driving distance
     ## between the points.
+    ## 2.- Tree Matrix
     ##-------------------------------------
     ## Tree Matrix
     tree_matrix <- c()

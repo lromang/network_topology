@@ -54,6 +54,11 @@ if (!file.exists("distance_matrix.RData")) {
     attach("distance_matrix.RData")
 }
 
+
+## Get Distance Matrix
+test_dist   <- get_distance_matrix(ags_points[sample(nrow(ags_points), 10),],
+                                  distance_matrix)
+
 ## Generate Clusts
 test_clusts <- get_clusts(ags_points[sample(nrow(ags_points), 10), ],
                          distance_matrix,
