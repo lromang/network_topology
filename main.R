@@ -30,7 +30,7 @@ source("01-utils.R")
 source("02-cluster.R")
 
 ###############################################
-##########          MAIN       ################
+##########         MAIN        ################
 ###############################################
 
 data        <- read.csv("./data/dataCenso.csv", stringsAsFactors = FALSE)
@@ -53,20 +53,9 @@ if (!file.exists("distance_matrix.RData")) {
 }else {
     attach("distance_matrix.RData")
 }
-test_data <- filter(ags_points, pob > 1000)
 
-total_result <- c()
-for (centroids in c(1000,500,200,50,10,5,2)) {
-    if (centroids < length(test_data[[1]])) {
-    print(paste0("Prueba con: ",centroids," clusters", collapse=" " ))
-    test_vor <- get_cluster_voronoi(test_data,
-                                distance_matrix,
-                                coord_cols = 1:2,
-                                centroids
-                                )
+##
+test_clusts <- get_clusts(ags_points[sample(20,20), ], distance_matrix, nclusts = 2)
 
-    total_result <- rbind(total_result, test_vor)
-    }
-}
-
+## Save hash table
 save(distance_matrix, file = "distance_matrix.RData")

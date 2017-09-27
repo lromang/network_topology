@@ -30,6 +30,7 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
     if (is.na(destiny[1])) {
       return(0)
     }
+    ## Get Distance (START)
     base        <- "https://maps.googleapis.com/maps/api/directions/json?"
     origin      <- paste0("origin=", paste(origin, collapse = ","))
     destiny     <- paste0("destination=", paste(destiny, collapse = ","))
@@ -59,7 +60,8 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
     print(origin)
     print(destiny)
     print(distance)
-    if(distance > 0) {
+    ## Get Distance (END)
+    if(distance >= 0) {
       distance_matrix_[[key_1]] <- distance
     }
     if (file.exists("intermedio.txt")) {
