@@ -54,8 +54,12 @@ if (!file.exists("distance_matrix.RData")) {
     attach("distance_matrix.RData")
 }
 
-##
-test_clusts <- get_clusts(ags_points[sample(20,20), ], distance_matrix, nclusts = 2)
+## Generate Clusts
+test_clusts <- get_clusts(ags_points[sample(nrow(ags_points), 10), ],
+                         distance_matrix,
+                         nclusts = 4)
+
+## Generate Voronoi
 
 ## Save hash table
 save(distance_matrix, file = "distance_matrix.RData")

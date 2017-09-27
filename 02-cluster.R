@@ -36,7 +36,7 @@ get_clusts <- function(points, distance_matrix_, nclusts = 2,  mode = 'driving',
     ## entry 2 = clusters
     ## entry 3 = plot of clusters
     ##-------------------------------------
-    names(points) <- c('lat', 'lon','pob')
+    names(points) <- c('lat', 'lon', 'pob')
     ## Distance & Tree matrices
     dist_tree <- get_distance_matrix(points, distance_matrix_, mode)
     dist_m    <- dist_tree[[1]]
@@ -105,35 +105,47 @@ get_clusts <- function(points, distance_matrix_, nclusts = 2,  mode = 'driving',
 ##-------------------------------------
 ## euc voronoi
 ##-------------------------------------
-get_euclidean_vor <- function(data,coord_cols= 1:2,centroids=20){
+get_euclidean_vor <- function(data, coord_cols= 2:1, centroids = 20){
     ## Results
-    results   <- list()
+    results     <- list()
     ## Kmeans with euclidean distance
-    clusts    <- kmeans(data[,coord_cols],centers = centroids)
+    clusts      <- kmeans(data[, coord_cols],
+                         centers = centroids)
     data$clusts <- as.factor(clusts$cluster)
     ## Voronoi around centroids of k-means
-    voronoi   <- deldir(clusts$centers[,1],
-                       clusts$centers[,2])
+    voronoi     <- deldir(clusts$centers[,1],
+                         clusts$centers[,2])
     ## Plot
-    voro_plot <- ggplot(data = data, aes(x = lon,y = lat,size = pob,col=clusts)) +
-                 geom_point() +
-                 geom_point(data  = data.frame(clusts$centers),
-                           aes(x = lon,y = lat),col   = 'black',alpha = .8,
-                              size  = 1) +
-                 geom_segment(aes(x = x1,y = y1, xend = x2, yend = y2),
-                              size= 1, data = voronoi$dirsgs,
-                              linetype = 1,color = "#9E9E9E") +
-                 theme(panel.background = element_blank(),
-                       axis.title = element_text(face = "bold",
-                                                 color = "#1972b9"),
-                      legend.position  = 'none',
-                      panel.grid.major = element_line(colour = "#BDBDBD",
-                                                      linetype = "dotted"),
-                      panel.grid.minor = element_line(colour = "#E0E0E0",
-                                                      linetype = "dotted")) +
-                 ylab("V2") + xlab("V1")
+    voro_plot   <- ggplot(data = data,
+                         aes(x    = lon,
+                             y    = lat,
+                             size = pob,
+                             col  = clusts)) +
+        geom_point() +
+        geom_point(data  = data.frame(clusts$centers),
+                   aes(x = lon, y = lat),
+                   col   = 'black',
+                   alpha = .8,
+                   size  = 1) +
+        geom_segment(aes(x    = x1,
+                         y    = y1,
+                         xend = x2,
+                         yend = y2),
+                     size     = 1,
+                     data     = voronoi$dirsgs,
+                     linetype = 1,
+                     color    = "#9E9E9E") +
+    theme(panel.background = element_blank(),
+          axis.title = element_text(face  = "bold",
+                                    color = "#1972b9"),
+          legend.position  = 'none',
+          panel.grid.major = element_line(colour   = "#BDBDBD",
+                                          linetype = "dotted"),
+          panel.grid.minor = element_line(colour   = "#E0E0E0",
+                                          linetype = "dotted")) +
+        ylab("V2") + xlab("V1")
     print(voro_plot)
-    result <- list()
+    result      <- list()
     result[[1]] <- voro_plot
     result[[2]] <- data
     ## Add plot to results
@@ -169,13 +181,11 @@ get_optimal_cluster <- function(data, distance_matrix_) {
     all_clusts
 }
 
-
-
 ##-------------------------------------
 ## get cluster voronoi
 ##-------------------------------------
 get_cluster_voronoi <- function(data,distance_matrix_,coord_cols= 1:2,centroids){
-  result <- get_euclidean_vor(data, coord_cols, centroids)
+  result      <- get_euclidean_vor(data, coord_cols, centroids)
   result[[2]] <- get_optimal_cluster(result[[2]], distance_matrix_)
   for (i in 1:length(result[[2]])){
     print(result[[2]][[i]][[4]])
