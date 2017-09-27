@@ -73,7 +73,7 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
 ##-------------------------------------
 ## get distance matrix
 ##-------------------------------------
-get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coords_cols = 1:2){
+get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coords_cols = 2:1){
     ##-------------------------------------
     ## This function uses Google's API directions to
     ## calculate the driving distance between each point.
@@ -97,7 +97,10 @@ get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coor
                 next
               }
 
-            dist_matrix[i, j] <- get_num_distance(points[i,coords_cols], points[j,coords_cols],distance_matrix_ ,mode)
+            dist_matrix[i, j] <- get_num_distance(points[i, coords_cols],
+                                                 points[j, coords_cols],
+                                                 distance_matrix_ ,
+                                                 mode)
             dist_matrix[j, i] <- dist_matrix[i, j]
             ## Tree Matrix
             tree_matrix         <- rbind(tree_matrix,
