@@ -242,10 +242,18 @@ get_partition <- function(data, min_pop_criterion = TRUE){
 ##-------------------------------------
 iterative_clustering <- function(data,
                                 distance_matrix_,
-                                min_pop_centroids = 1000){
+                                min_pop_init_centroids = 1000,
+                                min_pop_end_centroids  = 100,
+                                min_pop_criterion      = TRUE){
     ## Initial solution
-    clustered_data <- init_clustering(data,
-                                     min_pop_centroids)
-    
+    clustered_data   <- init_clustering(data,
+                                       min_pop_init_centroids)
+    ## First partition
+    partitioned_data <- get_partition(clustered_data,
+                                     min_pop_criterion)
+    ## Iterative Network Construction
+    while(sum(partitioned_data$pob) > min_pop_end_centroids){
+        
+    }
 }
 
