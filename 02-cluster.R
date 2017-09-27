@@ -203,12 +203,34 @@ get_cluster_voronoi <- function(data, distance_matrix_, coord_cols = 2:1, centro
 ##-------------------------------------
 ## Get Init Clustering
 ##-------------------------------------
-init_clustering <- function(data, min_pop_centroids = 100){
+clusterize <- function(data,
+                      min_pop_centroids = 100,
+                      euc  = FALSE,
+                      distance_matrix_,
+                      mode = 'driving'){
     centroids    <- min(100, nrow(data)/2) ## Minimum number of centroids
     cluster_data <- data.table(data)
+    dist_m       <- list()
+    tree_m       <- list()
+    results      <- list()
     repeat{
-        init_clust           <- kmeans(scale(cluster_data[, 2:1]), centroids)
-        cluster_data$cluster <- init_clust$cluster
+        if(euc){
+            clusters  <- kmeans(scale(cluster_data[, 2:1]), centroids)$cluster
+        } else {
+            dist_tree <- get_distance_matrix(data, distance_matrix_, mode)
+            dist_m    <- dist_tree[[1]]
+            tree_m    <- dist_tree[[2]]
+            ## Clusters
+            if (centroids > 1) {
+                clusts       <- wcKMedoids(dist_m,
+                                          k       = centroids,
+                                          weights = data$pob)
+                clusters     <- as.factor(clusts$clustering)
+            } else {
+                clusters     <- as.factor(1)
+            }
+        }
+        cluster_data$cluster <- clusters
         centroids            <- max(centroids/2, 2)
         min_pop_clust        <- min(cluster_data[,sum(pob),by = cluster]$V1)
         if(min_pop_clust > min_pop_centroids){
@@ -217,7 +239,12 @@ init_clustering <- function(data, min_pop_centroids = 100){
             break
         }
     }
-    cluster_data
+    ## Results
+    results[[1]] <- cluster_data
+    results[[2]] <- dist_m
+    results[[3]] <- tree_m
+    ## Return
+    results
 }
 
 ##-------------------------------------
@@ -242,22 +269,20 @@ get_partition <- function(data, min_pop_criterion = TRUE){
 ##-------------------------------------
 iterative_clustering <- function(data,
                                 distance_matrix_,
-                                min_pop_init_centroids = 1000,
-                                min_pop_end_centroids  = 100,
+                                min_pop_centroids = seq(1000,100,100),
                                 min_pop_criterion      = TRUE){
     ## Initial solution
-    clustered_data   <- init_clustering(data,
-                                       min_pop_init_centroids)
+    clustered_data   <- clusterize(data,
+                                  min_pop_centroids[1],
+                                  euc = TRUE)[[1]]
     ## First partition
     partitioned_data <- get_partition(clustered_data,
                                      min_pop_criterion)
     ## Iterative Network Construction
-    while(sum(partitioned_data$pob) > min_pop_end_centroids &&
+    while(sum(partitioned_data$pob) > min_pop_centroids[length(min_pop_centroids)] &&
           nrow(partitioned_data)    > 1){
-              ## Get optimal number of clusters
-              n_clusts <- clusGap(apply(data[, 2:1], 2, scale),
-                                 FUN   = kmeans,
-                                 K.max = nrow(partitioned_data)/2)
+              ## Clusterize Data
+              
     }
 }
 
