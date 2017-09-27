@@ -229,6 +229,7 @@ clusterize <- function(data,
                 clusts       <- wcKMedoids(dist_m,
                                           k       = centroids,
                                           weights = data$pob)
+                ## Get Distance matrix of centroids!!! 
                 clusters     <- as.factor(clusts$clustering)
             } else {
                 clusters     <- as.factor(1)
@@ -293,7 +294,10 @@ iterative_clustering <- function(data,
                                             min_pop_centroids = min_pop_centroids[partition_loop],
                                             euc = FALSE,
                                             distance_matrix_ = distance_matrix_)
-              partitioned_data <- intermediate_data[[1]]
+              partitioned_data <- get_partition(intermediate_data[[1]],
+                                               min_pop_criterion)
+              ## Right now we are connecting points
+              ## but we need to connect centroids, not points!
     }
 }
 
