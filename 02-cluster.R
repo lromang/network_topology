@@ -204,10 +204,14 @@ get_cluster_voronoi <- function(data, distance_matrix_, coord_cols = 2:1, centro
 ## Get Init Clustering
 ##-------------------------------------
 clusterize <- function(data,
-                      min_pop_centroids = 100,
+                      min_pop_centroids,
                       euc  = FALSE,
                       distance_matrix_,
                       mode = 'driving'){
+    ## Adjust min_pop_centroids
+    min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2)
+    print(min_pop_centroids)
+    ##
     centroids    <- min(100, nrow(data)/2) ## Minimum number of centroids
     cluster_data <- data.table(data)
     dist_m       <- list()
@@ -217,7 +221,7 @@ clusterize <- function(data,
         if(euc){
             clusters  <- kmeans(scale(cluster_data[, 2:1]), centroids)$cluster
         } else {
-            dist_tree <- get_distance_matrix(data, distance_matrix_, mode)
+            dist_tree <- get_distance_matrix(data.frame(cluster_data), distance_matrix_, mode)
             dist_m    <- dist_tree[[1]]
             tree_m    <- dist_tree[[2]]
             ## Clusters
@@ -231,10 +235,11 @@ clusterize <- function(data,
             }
         }
         cluster_data$cluster <- clusters
-        centroids            <- max(centroids/2, 2)
-        min_pop_clust        <- min(cluster_data[,sum(pob),by = cluster]$V1)
-        if(min_pop_clust > min_pop_centroids){
-            print(sprintf('Min Pop Clust = %d',
+        centroids            <- max(floor(centroids/2), 2)
+        min_pop_clust        <- min(cluster_data[,sum(pob), by = cluster]$V1)
+        print(min_pop_clust)
+        if(min_pop_clust > min_pop_centroids || centroids == 2){
+            print(sprintf('Min Pop Clust = %i',
                           min_pop_clust))
             break
         }
@@ -269,7 +274,7 @@ get_partition <- function(data, min_pop_criterion = TRUE){
 ##-------------------------------------
 iterative_clustering <- function(data,
                                 distance_matrix_,
-                                min_pop_centroids = seq(1000,100,100),
+                                min_pop_centroids = seq(1000, 100, by = -100),
                                 min_pop_criterion      = TRUE){
     ## Initial solution
     clustered_data   <- clusterize(data,
@@ -284,10 +289,11 @@ iterative_clustering <- function(data,
     while(sum(partitioned_data$pob) > min_pop_centroids[length(min_pop_centroids)] &&
           nrow(partitioned_data)    > 1){
               ## Clusterize Data
-              partitioned_data <- clusterize(partitioned_data,
-                                            min_pop_centroids[partition_loop],
+              intermediate_data <- clusterize(partitioned_data,
+                                            min_pop_centroids = min_pop_centroids[partition_loop],
                                             euc = FALSE,
                                             distance_matrix_ = distance_matrix_)
+              partitioned_data <- intermediate_data[[1]]
     }
 }
 
