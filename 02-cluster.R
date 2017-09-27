@@ -207,7 +207,7 @@ init_clustering <- function(data, min_pop_centroids = 100){
     centroids    <- min(100, nrow(data)/2) ## Minimum number of centroids
     cluster_data <- data.table(data)
     repeat{
-        init_clust           <- kmeans(cluster_data[, 2:1], centroids)
+        init_clust           <- kmeans(scale(cluster_data[, 2:1]), centroids)
         cluster_data$cluster <- init_clust$cluster
         centroids            <- max(centroids/2, 2)
         min_pop_clust        <- min(cluster_data[,sum(pob),by = cluster]$V1)
@@ -252,8 +252,12 @@ iterative_clustering <- function(data,
     partitioned_data <- get_partition(clustered_data,
                                      min_pop_criterion)
     ## Iterative Network Construction
-    while(sum(partitioned_data$pob) > min_pop_end_centroids){
-        
+    while(sum(partitioned_data$pob) > min_pop_end_centroids &&
+          nrow(partitioned_data)    > 1){
+              ## Get optimal number of clusters
+              n_clusts <- clusGap(apply(data[, 2:1], 2, scale),
+                                 FUN   = kmeans,
+                                 K.max = nrow(partitioned_data)/2)
     }
 }
 
