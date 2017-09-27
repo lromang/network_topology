@@ -212,8 +212,8 @@ init_clustering <- function(data, min_pop_centroids = 100){
         centroids            <- max(centroids/2, 2)
         min_pop_clust        <- min(cluster_data[,sum(pob),by = cluster]$V1)
         if(min_pop_clust > min_pop_centroids){
-            print('Min pop clust')
-            print(min_pop_clust)
+            print(sprintf('Min Pop Clust = %d',
+                          min_pop_clust))
             break
         }
     }
@@ -221,9 +221,31 @@ init_clustering <- function(data, min_pop_centroids = 100){
 }
 
 ##-------------------------------------
+## Get Partition by Criterion
+##-------------------------------------
+get_partition <- function(data, min_pop_criterion = TRUE){
+    pops_centroid <- data[,sum(pob), by = cluster]
+    ## Min pop centroid
+    min_cluster <- pops_centroid$cluster[which(pops_centroid$V1 == min(pops_centroid$V1))]
+    ## Max pop centroid
+    max_cluster <- pops_centroid$cluster[which(pops_centroid$V1 == max(pops_centroid$V1))]
+    if(min_pop_criterion){
+        ans <-  dplyr::filter(data, cluster == min_cluster)
+    }else{
+        ans <-  dplyr::filter(data, cluster == max_cluster)
+    }
+    ans
+}
+
+##-------------------------------------
 ## iterative clustering
 ##-------------------------------------
-iterative_clustering <- function(data, distance_matrix_, min_pop_centroids = 1000){
+iterative_clustering <- function(data,
+                                distance_matrix_,
+                                min_pop_centroids = 1000){
+    ## Initial solution
+    clustered_data <- init_clustering(data,
+                                     min_pop_centroids)
     
 }
 
