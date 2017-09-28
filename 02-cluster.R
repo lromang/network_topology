@@ -207,13 +207,14 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
     results <- list()
     ## Get Clusters (of all points, with euclidean distance)
     if (centroids > 1) {
-    clusts       <- flexclust::kcca(data[,2:1],
+    clusts       <- flexclust::kcca(data,
                                    k       = centroids,
                                    weights = data$pob)
     clusters     <- as.factor(clusts@cluster)
     ## Connected_node from the previous iteration
-    centers      <- rbind(clusts@centers, connected_node)
+    centers      <- rbind(clusts@centers, connected_node[2:1])
     ## Distance matrix of centroids!!!!
+    ## Need to solve population problem
     dist_tree    <- get_distance_matrix(data.frame(centers),
                                        distance_matrix_,
                                        mode)
@@ -237,7 +238,7 @@ clusterize <- function(data,
                       euc  = FALSE,
                       distance_matrix_,
                       mode = 'driving',
-                      connnected_node = c(0, 0)){
+                      connected_node = c(0, 0)){
     ## Adjust min_pop_centroids
     min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2)
     print(min_pop_centroids)
@@ -308,7 +309,8 @@ get_partition <- function(data, min_pop_criterion = TRUE){
 iterative_clustering <- function(data,
                                 distance_matrix_,
                                 min_pop_centroids = seq(1000, 100, by = -100),
-                                min_pop_criterion      = TRUE){
+                                min_pop_criterion = TRUE,
+                                mode = 'driving'){
     ## ------------------------------
     ## Initial solution
     ## ------------------------------
@@ -332,10 +334,10 @@ iterative_clustering <- function(data,
               ## Clusterize Data
               intermediate_data <- clusterize(data              = partitioned_data,
                                              min_pop_centroids = min_pop_centroids[partition_loop],
-                                            euc                = FALSE,
-                                            distance_matrix_   = distance_matrix_,
-                                            mode               = mode,
-                                            connected_node     = connected_node)
+                                             euc                = FALSE,
+                                             distance_matrix_   = distance_matrix_,
+                                             mode               = mode,
+                                             connected_node     = connected_node)
               partitioned_data <- get_partition(intermediate_data[[1]],
                                                min_pop_criterion)
               ## Right now we are connecting points
