@@ -203,8 +203,28 @@ get_cluster_voronoi <- function(data, distance_matrix_, coord_cols = 2:1, centro
 ##-------------------------------------
 ## Get Tree Parameters
 ##-------------------------------------
-get_tree_param <- function(){
-    
+get_tree_param <- function(centers, data, m_tree, radius = 1000){
+    centers$pob     <- get_coverage(centers, data, radius)
+    centers$cluster <- 1:nrow(centers)
+    ## Add Trees
+    tree_cluster_filter <- get_tree_clust(tree_m, centers)
+    ## Get length of trees
+    trees_length        <- c()
+    k                   <- 1
+    for(i in unique(tree_cluster_filter$cluster)){
+        prim_clust      <- prim(dplyr::filter(tree_cluster_filter, cluster == i))
+        ## length of tree
+        trees_length[k] <- sum(prim_clust$p)
+        k               <- k + 1
+        clust_plot      <- clust_plot +
+                          geom_segment( data = prim_clust,
+                                   aes(x = x, y = y, xend = xend, yend = yend),
+                                   col = "gray",linetype = 2)
+    }
+
+    ##
+    print(clust_plot)
+
 }
 
 ##-------------------------------------
