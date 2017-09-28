@@ -203,18 +203,18 @@ get_cluster_voronoi <- function(data, distance_matrix_, coord_cols = 2:1, centro
 ##-------------------------------------
 ## Build Network
 ##-------------------------------------
-build_net <- function(data, distance_matrix_, mode, centroids){
+build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
     results <- list()
     ## Get Clusters (of all points, with euclidean distance)
     if (centroids > 1) { 
-    clusts       <- ewkm(dist(data[,2:1]),
-                        centers = centroids,
-                        lambda = data$pob)
-
-    clusters     <- as.factor(clusts$clustering)
-    centers      <- 
+    clusts       <- flexclust::kcca(data[,2:1],
+                                   k       = centroids,
+                                   weights = data$pob)
+    clusters     <- as.factor(clusts@cluster)
+    ## Connected_node from the previous iteration
+    centers      <- rbind(clusts@centers, connected_node)
     ## Distance matrix of centroids!!!!
-    dist_tree    <- get_distance_matrix(data.frame(cluster_data),
+    dist_tree    <- get_distance_matrix(data.frame(centers),
                                        distance_matrix_,
                                        mode)
     results[[1]] <- dist_tree[[1]]
@@ -242,14 +242,17 @@ clusterize <- function(data,
     ##
     centroids    <- min(100, nrow(data)/2) ## Minimum number of centroids
     cluster_data <- data.table(data)
+    centers      <- c()
     dist_m       <- list()
     tree_m       <- list()
     results      <- list()
     repeat{
         if(euc){
-            clusters  <- kmeans(scale(cluster_data[, 2:1]), centroids)$cluster
+            cclusters <- kmeans(scale(cluster_data[, 2:1]), centroids)
+            clusters  <- cclusters$cluster
+            centers   <- cclusters$centers
         } else {
-
+            ## Non Euclidean Clustering
         }
         cluster_data$cluster <- clusters
         centroids            <- max(floor(centroids/2), 2)
@@ -263,8 +266,9 @@ clusterize <- function(data,
     }
     ## Results
     results[[1]] <- cluster_data
-    results[[2]] <- dist_m
-    results[[3]] <- tree_m
+    results[[2]] <- centers
+    results[[3]] <- dist_m
+    results[[4]] <- tree_m
     ## Return
     results
 }
