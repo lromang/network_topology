@@ -201,6 +201,25 @@ get_cluster_voronoi <- function(data, distance_matrix_, coord_cols = 2:1, centro
 ##################################################
 
 ##-------------------------------------
+## Get Tree Parameters
+##-------------------------------------
+get_tree_param <- function(){
+    
+}
+
+##-------------------------------------
+## Get Coverage
+##-------------------------------------
+get_coverage <- function(centers, data, radius = 1000){
+    ## Radius in meters
+    center_pop <- c()
+    for(i in 1:nrow(centers)){
+        center_pop[i] <- sum(data$pob[distGeo(data[,1:2], centers[i,1:2]) < radius])
+    }
+    center_pop
+}
+
+##-------------------------------------
 ## Build Network
 ##-------------------------------------
 build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
@@ -338,11 +357,11 @@ iterative_clustering <- function(data,
                                              distance_matrix_  = distance_matrix_,
                                              mode              = mode,
                                              connected_node    = connected_node)
+              ## Get partition according to criterion
               partitioned_data <- get_partition(intermediate_data[[1]],
                                                min_pop_criterion)
               ## Connected_node
-    connected_node   <- centers[unique(partitioned_data$cluster), ]
-
-    }
+              connected_node   <- intermediate_data[[2]][unique(partitioned_data$cluster), ]
+          }
 }
 
