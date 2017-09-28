@@ -201,6 +201,34 @@ get_cluster_voronoi <- function(data, distance_matrix_, coord_cols = 2:1, centro
 ##################################################
 
 ##-------------------------------------
+## Build Network
+##-------------------------------------
+build_net <- function(data, distance_matrix_, mode, centroids){
+    results <- list()
+    ## Get Clusters (of all points, with euclidean distance)
+    if (centroids > 1) { 
+    clusts       <- ewkm(dist(data[,2:1]),
+                        centers = centroids,
+                        lambda = data$pob)
+
+    clusters     <- as.factor(clusts$clustering)
+    centers      <- 
+    ## Distance matrix of centroids!!!!
+    dist_tree    <- get_distance_matrix(data.frame(cluster_data),
+                                       distance_matrix_,
+                                       mode)
+    results[[1]] <- dist_tree[[1]]
+    results[[2]] <- dist_tree[[2]]
+    } else {
+        clusters <- as.factor(1)
+    }
+    results[[3]] <- clusters
+    ## Return
+    results
+}
+
+
+##-------------------------------------
 ## Get Init Clustering
 ##-------------------------------------
 clusterize <- function(data,
@@ -221,19 +249,7 @@ clusterize <- function(data,
         if(euc){
             clusters  <- kmeans(scale(cluster_data[, 2:1]), centroids)$cluster
         } else {
-            dist_tree <- get_distance_matrix(data.frame(cluster_data), distance_matrix_, mode)
-            dist_m    <- dist_tree[[1]]
-            tree_m    <- dist_tree[[2]]
-            ## Clusters
-            if (centroids > 1) {
-                clusts       <- wcKMedoids(dist_m,
-                                          k       = centroids,
-                                          weights = data$pob)
-                ## Get Distance matrix of centroids!!! 
-                clusters     <- as.factor(clusts$clustering)
-            } else {
-                clusters     <- as.factor(1)
-            }
+
         }
         cluster_data$cluster <- clusters
         centroids            <- max(floor(centroids/2), 2)

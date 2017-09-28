@@ -24,6 +24,7 @@ library(rgdal)
 library(readr)
 library(cluster)
 library(WeightedCluster)
+library(flexclust)
 library(ggmap)
 ## Clustering
 library(kernlab)
