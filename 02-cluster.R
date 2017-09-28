@@ -206,7 +206,7 @@ get_cluster_voronoi <- function(data, distance_matrix_, coord_cols = 2:1, centro
 build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
     results <- list()
     ## Get Clusters (of all points, with euclidean distance)
-    if (centroids > 1) { 
+    if (centroids > 1) {
     clusts       <- flexclust::kcca(data[,2:1],
                                    k       = centroids,
                                    weights = data$pob)
@@ -223,6 +223,7 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
         clusters <- as.factor(1)
     }
     results[[3]] <- clusters
+    results[[4]] <- centers
     ## Return
     results
 }
@@ -235,7 +236,8 @@ clusterize <- function(data,
                       min_pop_centroids,
                       euc  = FALSE,
                       distance_matrix_,
-                      mode = 'driving'){
+                      mode = 'driving',
+                      connnected_node = c(0, 0)){
     ## Adjust min_pop_centroids
     min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2)
     print(min_pop_centroids)
@@ -253,6 +255,16 @@ clusterize <- function(data,
             centers   <- cclusters$centers
         } else {
             ## Non Euclidean Clustering
+            non_euc_res <- build_net(data,
+                                    distance_matrix_,
+                                    mode,
+                                    centroids,
+                                    connected_node)
+            ## Res
+            dist_m      <- non_euc_res[[1]]
+            tree_m      <- non_euc_res[[2]]
+            clusters    <- non_euc_res[[3]]
+            centers     <- non_euc_res[[4]]
         }
         cluster_data$cluster <- clusters
         centroids            <- max(floor(centroids/2), 2)
