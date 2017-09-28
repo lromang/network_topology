@@ -207,7 +207,7 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
     results <- list()
     ## Get Clusters (of all points, with euclidean distance)
     if (centroids > 1) {
-    clusts       <- flexclust::kcca(data,
+    clusts       <- flexclust::kcca(data[,1:2],
                                    k       = centroids,
                                    weights = data$pob)
     clusters     <- as.factor(clusts@cluster)
@@ -334,14 +334,15 @@ iterative_clustering <- function(data,
               ## Clusterize Data
               intermediate_data <- clusterize(data              = partitioned_data,
                                              min_pop_centroids = min_pop_centroids[partition_loop],
-                                             euc                = FALSE,
-                                             distance_matrix_   = distance_matrix_,
-                                             mode               = mode,
-                                             connected_node     = connected_node)
+                                             euc               = FALSE,
+                                             distance_matrix_  = distance_matrix_,
+                                             mode              = mode,
+                                             connected_node    = connected_node)
               partitioned_data <- get_partition(intermediate_data[[1]],
                                                min_pop_criterion)
-              ## Right now we are connecting points
-              ## but we need to connect centroids, not points!
+              ## Connected_node
+    connected_node   <- centers[unique(partitioned_data$cluster), ]
+
     }
 }
 

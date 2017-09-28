@@ -87,7 +87,7 @@ get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coor
     tree_matrix <- c()
     ## Distance Matrix
     dist_matrix <- matrix(nrow = length(points[[1]]),
-                                    ncol = length(points[[1]]))
+                         ncol = length(points[[1]]))
     ## Fill in matrices
     for(i in 1:(length(points[[1]]) - 1)){
         for(j in (i + 1):length(points[[1]])){
