@@ -55,16 +55,13 @@ if (!file.exists("distance_matrix.RData")) {
 }
 
 
-## Get Distance Matrix
-test_dist   <- get_distance_matrix(ags_points[sample(nrow(ags_points), 10),],
-                                  distance_matrix)
+## --------------------------------------------------
+## Testing
+## --------------------------------------------------
 
-## Generate Clusts
-test_clusts <- get_clusts(ags_points[sample(nrow(ags_points), 10), ],
-                         distance_matrix,
-                         nclusts = 4)
 
-## Generate Voronoi
 
+## --------------------------------------------------
 ## Save hash table
+## --------------------------------------------------
 save(distance_matrix, file = "distance_matrix.RData")

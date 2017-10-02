@@ -279,10 +279,10 @@ clusterize <- function(data,
                       mode = 'driving',
                       connected_node = c(0, 0)){
     ## Adjust min_pop_centroids
-    min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2)
+    min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2) ## Puede cambiar
     print(min_pop_centroids)
     ##
-    centroids    <- min(100, nrow(data)/2) ## Minimum number of centroids
+    centroids    <- min(10, nrow(data)/2) ## Minimum number of centroids
     cluster_data <- data.table(data)
     centers      <- c()
     dist_m       <- list()
@@ -290,7 +290,9 @@ clusterize <- function(data,
     results      <- list()
     repeat{
         if(euc){
-            cclusters <- kmeans(cluster_data[, 2:1], centroids)
+            cclusters <- flexclust::kcca(data[,1:2],
+                                        k       = centroids,
+                                        weights = data$pob)
             clusters  <- cclusters$cluster
             centers   <- cclusters$centers
         } else {
