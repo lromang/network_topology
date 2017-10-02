@@ -274,27 +274,27 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
 ##-------------------------------------
 clusterize <- function(data,
                       min_pop_centroids,
-                      euc  = FALSE,
+                      first_iter = FALSE,
                       distance_matrix_,
-                      mode = 'driving',
+                      mode       = 'driving',
                       connected_node = c(0, 0)){
     ## Adjust min_pop_centroids
     min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2) ## Puede cambiar
     print(min_pop_centroids)
     ##
-    centroids    <- min(10, nrow(data)/2) ## Minimum number of centroids
+    centroids    <- min(100, nrow(data)/2) ## Minimum number of centroids
     cluster_data <- data.table(data)
     centers      <- c()
     dist_m       <- list()
     tree_m       <- list()
     results      <- list()
     repeat{
-        if(euc){
+        if(first_iter){
             cclusters <- flexclust::kcca(data[,1:2],
                                         k       = centroids,
                                         weights = data$pob)
-            clusters  <- cclusters$cluster
-            centers   <- cclusters$centers
+            clusters  <- cclusters@cluster
+            centers   <- cclusters@centers
         } else {
             ## Non Euclidean Clustering
             non_euc_res <- build_net(data,
@@ -308,13 +308,15 @@ clusterize <- function(data,
             clusters    <- non_euc_res[[3]]
             centers     <- non_euc_res[[4]]
         }
+        ## Check condition
         cluster_data$cluster <- clusters
         centroids            <- max(floor(centroids/2), 2)
         min_pop_clust        <- min(cluster_data[,sum(pob), by = cluster]$V1)
         print(min_pop_clust)
-        if(min_pop_clust > min_pop_centroids || centroids == 2){
-            print(sprintf('Min Pop Clust = %i',
-                          min_pop_clust))
+        if(min_pop_clust >= min_pop_centroids || centroids == 2){
+            print(sprintf('Min Pop Clust = %i, Centroids = %i',
+                          min_pop_clust,
+                          centroids))
             break
         }
     }
@@ -332,14 +334,14 @@ clusterize <- function(data,
 ##-------------------------------------
 get_partition <- function(data, min_pop_criterion = TRUE){
     pops_centroid <- data[,sum(pob), by = cluster]
-    ## Min pop centroid
-    min_cluster <- pops_centroid$cluster[which(pops_centroid$V1 == min(pops_centroid$V1))]
-    ## Max pop centroid
-    max_cluster <- pops_centroid$cluster[which(pops_centroid$V1 == max(pops_centroid$V1))]
     if(min_pop_criterion){
-        ans <-  dplyr::filter(data, cluster == min_cluster)
+        ## Min pop centroid
+        min_cluster <- pops_centroid$cluster[which(pops_centroid$V1 == min(pops_centroid$V1))]
+        ans         <-  dplyr::filter(data, cluster == min_cluster)
     }else{
-        ans <-  dplyr::filter(data, cluster == max_cluster)
+        ## Max pop centroid
+        max_cluster <- pops_centroid$cluster[which(pops_centroid$V1 == max(pops_centroid$V1))]
+        ans         <-  dplyr::filter(data, cluster == max_cluster)
     }
     ans
 }
@@ -357,7 +359,7 @@ iterative_clustering <- function(data,
     ## ------------------------------
     clustered_res    <- clusterize(data,
                                   min_pop_centroids[1],
-                                  euc = TRUE,
+                                  first_iter       = TRUE,
                                   distance_matrix_ = distance_matrix_)
     centers          <- clustered_res[[2]]
     clustered_data   <- clustered_res[[1]]
@@ -366,24 +368,30 @@ iterative_clustering <- function(data,
                                      min_pop_criterion)
     ## Connected_node
     connected_node   <- centers[unique(partitioned_data$cluster), ]
+    ## Get Nearest Locality!!!
+
     ## ------------------------------
     ## Iterative Network Construction
     ## ------------------------------
     partition_loop   <- 2
     while(sum(partitioned_data$pob) > min_pop_centroids[length(min_pop_centroids)] &&
-          nrow(partitioned_data)    > 1){
+          nrow(partitioned_data)    > 1 &&
+          partition_loop <= length(min_pop_centroids)){
               ## Clusterize Data
               intermediate_data <- clusterize(data              = partitioned_data,
                                              min_pop_centroids = min_pop_centroids[partition_loop],
-                                             euc               = FALSE,
+                                             first_iter        = FALSE,
                                              distance_matrix_  = distance_matrix_,
                                              mode              = mode,
                                              connected_node    = connected_node)
               ## Get partition according to criterion
+              ## min_pop_cirterion could be an (TRUE, FALSE, FALSE,....) sequence
               partitioned_data <- get_partition(intermediate_data[[1]],
                                                min_pop_criterion)
               ## Connected_node
               connected_node   <- intermediate_data[[2]][unique(partitioned_data$cluster), ]
+              ## Partition loop
+              partition_loop   <- partition_loop + 1
           }
 }
 
