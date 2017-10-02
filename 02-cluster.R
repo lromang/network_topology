@@ -227,6 +227,15 @@ get_tree_param <- function(centers, data, m_tree, radius = 1000){
 
 }
 
+
+##-------------------------------------
+## Get Nearest Point
+##-------------------------------------
+get_nearest_point <- function(point, data){
+    distance <- distGeo(data[, 1:2], point)
+    data[which(distance == min(distance))[1], 1:2]
+}
+
 ##-------------------------------------
 ## Get Coverage
 ##-------------------------------------
@@ -234,7 +243,8 @@ get_coverage <- function(centers, data, radius = 1000){
     ## Radius in meters
     center_pop <- c()
     for(i in 1:nrow(centers)){
-        center_pop[i] <- sum(data$pob[distGeo(data[,1:2], centers[i,1:2]) < radius])
+        center_pop[i] <- sum(data$pob[distGeo(data[,1:2],
+                                             centers[i,1:2]) < radius])
     }
     center_pop
 }
@@ -368,8 +378,8 @@ iterative_clustering <- function(data,
                                      min_pop_criterion)
     ## Connected_node
     connected_node   <- centers[unique(partitioned_data$cluster), ]
-    ## Get Nearest Locality!!!
-
+    ## Get Nearest Locality
+    connected_node   <- get_nearest_point(connected_node, partitioned_data)
     ## ------------------------------
     ## Iterative Network Construction
     ## ------------------------------
@@ -390,6 +400,8 @@ iterative_clustering <- function(data,
                                                min_pop_criterion)
               ## Connected_node
               connected_node   <- intermediate_data[[2]][unique(partitioned_data$cluster), ]
+              ## Get Nearest Locality
+              connected_node   <- get_nearest_point(connected_node, partitioned_data)
               ## Partition loop
               partition_loop   <- partition_loop + 1
           }
