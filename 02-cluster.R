@@ -232,8 +232,8 @@ get_tree_param <- function(centers, data, m_tree, radius = 1000){
 ## Get Nearest Point
 ##-------------------------------------
 get_nearest_point <- function(point, data){
-    distance <- distGeo(data[, 1:2], point)
-    data[which(distance == min(distance))[1], 1:2]
+    Wdistance <- distGeo(data[, 1:2], point)/data$pob
+    data[which(Wdistance == min(Wdistance))[1], 1:2]
 }
 
 ##-------------------------------------
