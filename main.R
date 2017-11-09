@@ -44,6 +44,7 @@ names(data) <- c("ent",
                 "pob")
 
 ## Work with Aguascalientes
+## 1 <- Ags
 ags_mun    <- dplyr::filter(data, nom_mun == 'Aguascalientes')
 ags_points <- dplyr::select(ags_mun, lon, lat, pob)
 

@@ -258,7 +258,7 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
     if (centroids > 1) {
     clusts       <- flexclust::kcca(data[,1:2],
                                    k       = centroids,
-                                   weights = data$pob)
+                                   weights = data$pob/sum(data$pob))
     clusters     <- as.factor(clusts@cluster)
     ## Connected_node from the previous iteration
     centers      <- rbind(clusts@centers, connected_node)
@@ -301,7 +301,7 @@ clusterize <- function(data,
         if(first_iter){
             cclusters <- flexclust::kcca(data[,1:2],
                                         k       = centroids,
-                                        weights = data$pob)
+                                        weights = data$pob/sum(data$pob))
             clusters  <- cclusters@cluster
             centers   <- cclusters@centers
         } else {
