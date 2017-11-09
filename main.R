@@ -45,7 +45,7 @@ names(data) <- c("ent",
 
 ## Work with Aguascalientes
 ## 1 <- Ags
-ags_mun    <- dplyr::filter(data, nom_mun == 'Aguascalientes')
+ags_mun    <- dplyr::filter(data, ent == 1)
 ags_points <- dplyr::select(ags_mun, lon, lat, pob)
 
 ## Get voronoi with euclidean distance
@@ -60,7 +60,14 @@ if (!file.exists("distance_matrix.RData")) {
 ## Testing
 ## --------------------------------------------------
 data <- ags_points
-
+## test
+test <- iterative_clustering(data,
+                            distance_matrix_,
+                            min_pop_centroids = seq(1000,
+                                                    100,
+                                                    by = -100),
+                            min_pop_criterion = TRUE,
+                            mode = 'driving')
 
 ## --------------------------------------------------
 ## Save hash table

@@ -389,22 +389,32 @@ iterative_clustering <- function(data,
     ## Connected_node
     connected_node   <- centers[unique(partitioned_data$cluster), ]
     ## Get Nearest Locality
-    ## connected_node   <- get_nearest_point(connected_node, partitioned_data)
-
+    connected_node   <- get_nearest_point(connected_node, partitioned_data)
     ## ------------------------------
     ## Iterative Network Construction
     ## ------------------------------
-    partition_loop   <- 2
+    iter_index       <- 1
+    length_net       <- c()
+    total_pob        <- c()
+    n_partitions     <- length(unique(clustered_data$cluster))
     while(sum(partitioned_data$pob) > min_pop_centroids[length(min_pop_centroids)] &&
           nrow(partitioned_data)    > 1 &&
-          partition_loop <= length(min_pop_centroids)){
+          iter_index + 1 <= length(min_pop_centroids)){
               ## Clusterize Data
               intermediate_data <- clusterize(data              = partitioned_data,
-                                             min_pop_centroids = min_pop_centroids[partition_loop],
+                                             min_pop_centroids = min_pop_centroids[iter_index + 1],
                                              first_iter        = FALSE,
                                              distance_matrix_  = distance_matrix_,
                                              mode              = mode,
                                              connected_node    = connected_node)
+              ## Get length of network
+              tree                   <- prim(intermediate_data[[4]])
+              length_net[iter_index] <- sum(tree$p) * n_partitions
+              ## Get Coverage
+              total_pob[iter_index]  <- get_coverage(centers = intermediate_data[[2]],
+                                                    data    = intermediate_data[[1]],
+                                                    ## Otro hiperparámetro que podría ser un arreglo
+                                                    radius  = 1000) * n_partitions
               ## Get partition according to criterion
               ## min_pop_cirterion could be an (TRUE, FALSE, FALSE,....) sequence
               partitioned_data <- get_partition(intermediate_data[[1]],
@@ -414,7 +424,9 @@ iterative_clustering <- function(data,
               ## Get Nearest Locality
               connected_node   <- get_nearest_point(connected_node, partitioned_data)
               ## Partition loop
-              partition_loop   <- partition_loop + 1
+              iter_index       <- iter_index + 1
+              ## N partitions
+              n_partitions     <- length(unique(intermediate_data[[1]]$cluster))
           }
 }
 
