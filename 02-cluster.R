@@ -370,7 +370,7 @@ get_partition <- function(data, min_pop_criterion = TRUE){
 iterative_clustering <- function(data,
                                 distance_matrix_,
                                 ## Población mínima por cluster en cada iteración. 
-                                min_pop_centroids = seq(100, 10, by = -10), 
+                                min_pop_centroids = seq(1000, 100, by = -100), 
                                 ## Si se va a usar este criterio o no... actualmente alternativa es max pop
                                 ## podría ser también el cluster más disperso o el menos disperso o
                                 ## mezclas y ver cómo cambia...
@@ -393,6 +393,9 @@ iterative_clustering <- function(data,
     connected_node   <- centers[unique(partitioned_data$cluster), ]
     ## Get Nearest Locality
     connected_node   <- get_nearest_point(connected_node, partitioned_data)
+    
+    cluster_plot     <- plot_init_cluster(clustered_res[[1]])
+    
     ## ------------------------------
     ## Iterative Network Construction
     ## ------------------------------
@@ -412,6 +415,7 @@ iterative_clustering <- function(data,
                                              connected_node    = connected_node)
               ## Get length of network
               tree                   <- prim(intermediate_data[[4]])
+              cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree)
               length_net[iter_index] <- sum(tree$p) * n_partitions
               ## Get Coverage
               total_pob[iter_index]  <- sum(get_coverage(centers = intermediate_data[[2]],

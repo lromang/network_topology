@@ -60,14 +60,19 @@ if (!file.exists("distance_matrix.RData")) {
 ## Testing
 ## --------------------------------------------------
 data <- ags_points
+distance_matrix_ <- distance_matrix
+min_pop_centroids = seq(1000, 100, by = -100)
+min_pop_criterion = TRUE
+mode = 'driving'
+
 ## test
-test <- iterative_clustering(data,
-                            distance_matrix_,
-                            min_pop_centroids = seq(1000,
-                                                    100,
-                                                    by = -100),
-                            min_pop_criterion = TRUE,
-                            mode = 'driving')
+#test <- iterative_clustering(data,
+#                            distance_matrix_,
+#                            min_pop_centroids = seq(1000,
+#                                                    100,
+#                                                    by = -100),
+#                            min_pop_criterion = TRUE,
+#                            mode = 'driving')
 
 ## --------------------------------------------------
 ## Save hash table

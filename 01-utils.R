@@ -161,3 +161,64 @@ prim <- function(G){
     }
     T
 }
+
+
+range_quantil <- function (current_value,max_value){
+  return(3)
+  if (current_value < max_value/5 ){
+    return (5)
+  }
+  if (current_value < (max_value*2)/5){
+      return(6)
+  }
+  if (current_value < (max_value*3)/5){
+    return(7)
+  }
+  if (current_value < (max_value*4)/5){
+    return(8)
+  }
+  if (current_value < max_value){
+    return(9)
+  }
+  
+}
+
+#####################################################################
+###############            PLOT FUNCTIONS             ###############
+#####################################################################
+
+plot_init_cluster <- function (points){
+    factpal <- colorFactor(topo.colors(unique(points$cluster)), points$cluster)
+    max_value <- max(points$pob)
+    map <- leaflet(data= points) %>% addTiles() %>%
+      addCircleMarkers(
+        radius =~lapply(pob, function(x){range_quantil(x,max_value)}),
+        color = ~factpal(cluster),
+        stroke = FALSE, fillOpacity = 0.5,
+       popup = ~as.character(pob), label = ~as.character(pob)
+      )
+    
+    for(i in unique(points$cluster)){
+      data_clust <- dplyr::filter(points, cluster == i)
+      ch <- chull(data_clust)
+      map<-addPolylines(map,data = data_clust[c(ch, ch[1]),], lng = ~lon, lat = ~lat, weight = 4)
+    }
+    return (map%>% addProviderTiles(providers$Esri.NatGeoWorldMap)   )
+}
+
+
+add_tree_plot <- function (last_plot, points, tree) {
+
+    for(i in unique(points$cluster)){
+      data_clust <- dplyr::filter(points, cluster == i)
+      ch <- chull(data_clust)
+      last_plot<-addPolylines(last_plot,data = data_clust[c(ch, ch[1]),], lng = ~lon, lat = ~lat, weight = 4, color = "Red")
+    }
+  
+    for(i in 1:nrow(tree)){
+       last_plot <- addPolylines(last_plot, lat = as.numeric(tree[i, c(1, 3)]), 
+                         lng = as.numeric(tree[i, c(2, 4)]), color = "Red")
+    }
+  return (last_plot)
+}
+
