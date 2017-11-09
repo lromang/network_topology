@@ -261,7 +261,7 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
                                    weights = data$pob)
     clusters     <- as.factor(clusts@cluster)
     ## Connected_node from the previous iteration
-    centers      <- rbind(clusts@centers, connected_node[2:1])
+    centers      <- rbind(clusts@centers, connected_node)
     ## Distance matrix of centroids!!!!
     ## Need to solve population problem
     dist_tree    <- get_distance_matrix(data.frame(centers),
@@ -291,7 +291,7 @@ clusterize <- function(data,
     ## Para evitar que haya tantos clusters como puntos
     min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2) 
     ## Número de clusters para empezar la iteración
-    centroids    <- floor((nrow(data) * .1) + 1)
+    centroids    <- floor((nrow(data) * .05) + 1)
     cluster_data <- data.table(data)
     centers      <- c()
     dist_m       <- list()
@@ -345,6 +345,9 @@ clusterize <- function(data,
 ## Get Partition by Criterion
 ##-------------------------------------
 get_partition <- function(data, min_pop_criterion = TRUE){
+    ## Agregar el criterio de más disperso
+    ## o menos disperso ... seguramente por
+    ## heurísitca
     pops_centroid <- data[,sum(pob), by = cluster]
     if(min_pop_criterion){
         ## Min pop centroid
@@ -370,10 +373,10 @@ iterative_clustering <- function(data,
                                 ## mezclas y ver cómo cambia...
                                 min_pop_criterion = TRUE,
                                 mode = 'driving'){
-
     ## ------------------------------
     ## Initial solution
     ## ------------------------------
+    ## Data should be (lon, lat, pob)!!!
     clustered_res    <- clusterize(data,
                                   min_pop_centroids[1],
                                   first_iter       = TRUE,
@@ -386,7 +389,7 @@ iterative_clustering <- function(data,
     ## Connected_node
     connected_node   <- centers[unique(partitioned_data$cluster), ]
     ## Get Nearest Locality
-    connected_node   <- get_nearest_point(connected_node, partitioned_data)
+    ## connected_node   <- get_nearest_point(connected_node, partitioned_data)
 
     ## ------------------------------
     ## Iterative Network Construction
