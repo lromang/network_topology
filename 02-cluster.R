@@ -288,11 +288,10 @@ clusterize <- function(data,
                       distance_matrix_,
                       mode       = 'driving',
                       connected_node = c(0, 0)){
-    ## Adjust min_pop_centroids
-    min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2) ## Puede cambiar
-    print(min_pop_centroids)
-    ##
-    centroids    <- min(100, nrow(data)/2) ## Minimum number of centroids
+    ## Para evitar que haya tantos clusters como puntos
+    min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2) 
+    ## Número de clusters para empezar la iteración
+    centroids    <- floor((nrow(data) * .1) + 1)
     cluster_data <- data.table(data)
     centers      <- c()
     dist_m       <- list()
@@ -320,9 +319,12 @@ clusterize <- function(data,
         }
         ## Check condition
         cluster_data$cluster <- clusters
-        centroids            <- max(floor(centroids/2), 2)
+        ## Hacer clusters más grandes -> más poblados
+        centroids            <- max(floor(centroids / 2), 2)
+        ## Sacar población de cluster menos poblado
         min_pop_clust        <- min(cluster_data[,sum(pob), by = cluster]$V1)
-        print(min_pop_clust)
+        ## Ver si se cumple el criterio poblacional y si tenemos
+        ## al menos dos clusters
         if(min_pop_clust >= min_pop_centroids || centroids == 2){
             print(sprintf('Min Pop Clust = %i, Centroids = %i',
                           min_pop_clust,
@@ -361,9 +363,14 @@ get_partition <- function(data, min_pop_criterion = TRUE){
 ##-------------------------------------
 iterative_clustering <- function(data,
                                 distance_matrix_,
-                                min_pop_centroids = seq(1000, 100, by = -100),
+                                ## Población mínima por cluster en cada iteración. 
+                                min_pop_centroids = seq(1000, 100, by = -100), 
+                                ## Si se va a usar este criterio o no... actualmente alternativa es max pop
+                                ## podría ser también el cluster más disperso o el menos disperso o
+                                ## mezclas y ver cómo cambia...
                                 min_pop_criterion = TRUE,
                                 mode = 'driving'){
+
     ## ------------------------------
     ## Initial solution
     ## ------------------------------
@@ -380,6 +387,7 @@ iterative_clustering <- function(data,
     connected_node   <- centers[unique(partitioned_data$cluster), ]
     ## Get Nearest Locality
     connected_node   <- get_nearest_point(connected_node, partitioned_data)
+
     ## ------------------------------
     ## Iterative Network Construction
     ## ------------------------------
