@@ -194,16 +194,22 @@ plot_init_cluster <- function (points){
       addCircleMarkers(
         radius =~lapply(pob, function(x){range_quantil(x,max_value)}),
         color = ~factpal(cluster),
-        stroke = FALSE, fillOpacity = 0.5,
-       popup = ~as.character(pob), label = ~as.character(pob)
+        stroke = FALSE, fillOpacity = 0.5
       )
     
     for(i in unique(points$cluster)){
       data_clust <- dplyr::filter(points, cluster == i)
+      this_pob   <- sum(data_clust$pob)
       ch <- chull(data_clust)
-      map<-addPolylines(map,data = data_clust[c(ch, ch[1]),], lng = ~lon, lat = ~lat, weight = 4)
+      map<-addPolygons(map,data = data_clust[c(ch, ch[1]),],   
+                           opacity = 0,
+                           lng = ~lon, 
+                           lat = ~lat, 
+                           weight = 4,
+                           popup = ~as.character(this_pob),
+                           label = ~as.character(this_pob))
     }
-    return (map%>% addProviderTiles(providers$Esri.NatGeoWorldMap)   )
+    return (map )
 }
 
 
@@ -211,8 +217,17 @@ add_tree_plot <- function (last_plot, points, tree) {
 
     for(i in unique(points$cluster)){
       data_clust <- dplyr::filter(points, cluster == i)
+      this_pob   <- sum(data_clust$pob)
       ch <- chull(data_clust)
-      last_plot<-addPolylines(last_plot,data = data_clust[c(ch, ch[1]),], lng = ~lon, lat = ~lat, weight = 4, color = "Red")
+      last_plot<-addPolygons(last_plot,data = data_clust[c(ch, ch[1]),],   
+                                      opacity = 0,
+                                      lng = ~lon, 
+                                      lat = ~lat, 
+                                      weight = 4,
+                                      popup = ~as.character(this_pob),
+                                      label = ~as.character(this_pob),
+                                      color = "Red")
+      #last_plot<-addPolylines(last_plot,data = data_clust[c(ch, ch[1]),], lng = ~lon, lat = ~lat, weight = 4, )
     }
   
     for(i in 1:nrow(tree)){
