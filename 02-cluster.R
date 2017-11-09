@@ -271,6 +271,7 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
     results[[2]] <- dist_tree[[2]]
     } else {
         clusters <- as.factor(1)
+        centers <- connected_node
     }
     results[[3]] <- clusters
     results[[4]] <- centers
@@ -325,7 +326,7 @@ clusterize <- function(data,
         min_pop_clust        <- min(cluster_data[,sum(pob), by = cluster]$V1)
         ## Ver si se cumple el criterio poblacional y si tenemos
         ## al menos dos clusters
-        if(min_pop_clust >= min_pop_centroids || centroids_next == 2){
+        if(min_pop_clust >= min_pop_centroids || centroids_next <= 2){
             print(sprintf('Min Pop Clust = %i, Centroids = %i',
                           min_pop_clust,
                           centroids))
@@ -414,9 +415,14 @@ iterative_clustering <- function(data,
                                              mode              = mode,
                                              connected_node    = connected_node)
               ## Get length of network
-              tree                   <- prim(intermediate_data[[4]])
-              cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree)
-              length_net[iter_index] <- sum(tree$p) * n_partitions
+              if (length(intermediate_data) == 4) {
+                  ##### Pendiente, revisar que pasa en el else 
+                  ##### Else implica que es un cluster con un solo centroide
+                  tree                   <- prim(intermediate_data[[4]])
+                  cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree)
+                  length_net[iter_index] <- sum(tree$p) * n_partitions
+              }
+            
               ## Get Coverage
               total_pob[iter_index]  <- sum(get_coverage(centers = intermediate_data[[2]],
                                                     data    = intermediate_data[[1]],
@@ -434,6 +440,6 @@ iterative_clustering <- function(data,
               iter_index       <- iter_index + 1
               ## N partitions
               n_partitions     <- length(unique(intermediate_data[[1]]$cluster))
-          }
+    }
 }
 

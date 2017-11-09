@@ -214,7 +214,7 @@ plot_init_cluster <- function (points){
 
 
 add_tree_plot <- function (last_plot, points, tree) {
-
+    color <- colorRampPalette(c("yellow", "red"))(1)
     for(i in unique(points$cluster)){
       data_clust <- dplyr::filter(points, cluster == i)
       this_pob   <- sum(data_clust$pob)
@@ -226,13 +226,12 @@ add_tree_plot <- function (last_plot, points, tree) {
                                       weight = 4,
                                       popup = ~as.character(this_pob),
                                       label = ~as.character(this_pob),
-                                      color = "Red")
-      #last_plot<-addPolylines(last_plot,data = data_clust[c(ch, ch[1]),], lng = ~lon, lat = ~lat, weight = 4, )
+                                      color = color)
     }
   
     for(i in 1:nrow(tree)){
        last_plot <- addPolylines(last_plot, lat = as.numeric(tree[i, c(1, 3)]), 
-                         lng = as.numeric(tree[i, c(2, 4)]), color = "Red")
+                         lng = as.numeric(tree[i, c(2, 4)]), color = color)
     }
   return (last_plot)
 }
