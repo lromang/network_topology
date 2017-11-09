@@ -414,10 +414,10 @@ iterative_clustering <- function(data,
               tree                   <- prim(intermediate_data[[4]])
               length_net[iter_index] <- sum(tree$p) * n_partitions
               ## Get Coverage
-              total_pob[iter_index]  <- get_coverage(centers = intermediate_data[[2]],
+              total_pob[iter_index]  <- sum(get_coverage(centers = intermediate_data[[2]],
                                                     data    = intermediate_data[[1]],
                                                     ## Otro hiperparámetro que podría ser un arreglo
-                                                    radius  = 1000) * n_partitions
+                                                    radius  = 1000)) * n_partitions
               ## Get partition according to criterion
               ## min_pop_cirterion could be an (TRUE, FALSE, FALSE,....) sequence
               partitioned_data <- get_partition(intermediate_data[[1]],
