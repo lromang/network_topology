@@ -320,17 +320,20 @@ clusterize <- function(data,
         ## Check condition
         cluster_data$cluster <- clusters
         ## Hacer clusters más grandes -> más poblados
-        centroids            <- max(floor(centroids / 2), 2)
+        centroids_next       <- max(floor(centroids / 2), 2)
         ## Sacar población de cluster menos poblado
         min_pop_clust        <- min(cluster_data[,sum(pob), by = cluster]$V1)
         ## Ver si se cumple el criterio poblacional y si tenemos
         ## al menos dos clusters
-        if(min_pop_clust >= min_pop_centroids || centroids == 2){
+        if(min_pop_clust >= min_pop_centroids || centroids_next == 2){
             print(sprintf('Min Pop Clust = %i, Centroids = %i',
                           min_pop_clust,
                           centroids))
             break
         }
+        ## Se hace la actualización después de verificar para
+        ## no intentar clusterizar con un solo centroide
+        centroids <- centroids_next
     }
     ## Results
     results[[1]] <- cluster_data
