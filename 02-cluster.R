@@ -370,7 +370,7 @@ get_partition <- function(data, min_pop_criterion = TRUE){
 iterative_clustering <- function(data,
                                 distance_matrix_,
                                 ## Población mínima por cluster en cada iteración. 
-                                min_pop_centroids = seq(1000, 100, by = -100), 
+                                min_pop_centroids = seq(100, 10, by = -10), 
                                 ## Si se va a usar este criterio o no... actualmente alternativa es max pop
                                 ## podría ser también el cluster más disperso o el menos disperso o
                                 ## mezclas y ver cómo cambia...
