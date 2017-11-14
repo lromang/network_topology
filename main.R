@@ -1,23 +1,17 @@
 ########################################
 ########################################
 ########################################
-## Entregables para el miercoles
-#  Escoger un municipio (Aguascalientes)  menor numero de poblados
-#  Correr muchas veces, -> 1000 clusters con distancias euclideana
-#                          500, 200, 100, 50 y correr el algoritmo
-#  Graficar numero de clusters vs km de fibra
-## TO DO
-## - API de connectivity
-## - Euc cluste based on population inside
-## - box of connected node.
-## - Iterative voronoi???
-## - Municipio:
-##   - stats: Mean, Max pop, Min pop and thresholds.
-## - Distance matrxi based on clusters
-## - Clustering with centroids
-## - K-means based on population
-## Whish list
-## - Point's cloud perimeter
+## = Autores
+##
+## - Luis Manuel Román García
+## - Miguel Alonso Vilchis
+##
+## -------------------------------------
+## = Descripción
+##
+## Código para construcción de red
+## basada en distancias carreteras.
+##
 ########################################
 ########################################
 ########################################
@@ -45,7 +39,7 @@ names(data) <- c("ent",
 
 ## Work with Aguascalientes
 ## 1 <- Ags
-ags_mun    <- dplyr::filter(data, ent == 1)
+ags_mun    <- dplyr::filter(data, ent == 2)
 ags_points <- dplyr::select(ags_mun, lon, lat, pob)
 
 ## Get voronoi with euclidean distance
@@ -59,7 +53,7 @@ if (!file.exists("distance_matrix.RData")) {
 ## --------------------------------------------------
 ## Testing
 ## --------------------------------------------------
-data <- ags_points
+data             <- ags_points
 distance_matrix_ <- distance_matrix
 min_pop_centroids = seq(1000, 100, by = -100)
 min_pop_criterion = TRUE

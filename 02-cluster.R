@@ -394,12 +394,12 @@ iterative_clustering <- function(data,
     connected_node   <- centers[unique(partitioned_data$cluster), ]
     ## Get Nearest Locality
     connected_node   <- get_nearest_point(connected_node, partitioned_data)
-    
     cluster_plot     <- plot_init_cluster(clustered_res[[1]])
-    
+
     ## ------------------------------
     ## Iterative Network Construction
     ## ------------------------------
+    all_trees        <- list()
     iter_index       <- 1
     length_net       <- c()
     total_pob        <- c()
@@ -416,13 +416,15 @@ iterative_clustering <- function(data,
                                              connected_node    = connected_node)
               ## Get length of network
               if (length(intermediate_data) == 4) {
-                  ##### Pendiente, revisar que pasa en el else 
-                  ##### Else implica que es un cluster con un solo centroide
+                  ## Pendiente, revisar que pasa en el else 
+                  ## Else implica que es un cluster con un solo centroide
                   tree                   <- prim(intermediate_data[[4]])
                   cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree)
                   length_net[iter_index] <- sum(tree$p) * n_partitions
+                  ## Save results for
+                  all_trees[[iter_index]] <- tree
               }
-            
+
               ## Get Coverage
               total_pob[iter_index]  <- sum(get_coverage(centers = intermediate_data[[2]],
                                                     data    = intermediate_data[[1]],
@@ -440,6 +442,8 @@ iterative_clustering <- function(data,
               iter_index       <- iter_index + 1
               ## N partitions
               n_partitions     <- length(unique(intermediate_data[[1]]$cluster))
-    }
+          }
+    ## Result
+    list('pop' = total_pob, 'net' = length_net, 'trees' = all_trees)
 }
 
