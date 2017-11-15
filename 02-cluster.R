@@ -424,7 +424,6 @@ iterative_clustering <- function(data,
                   ## Save results for
                   all_trees[[iter_index]] <- tree
               }
-
               ## Get Coverage
               total_pob[iter_index]  <- sum(get_coverage(centers = intermediate_data[[2]],
                                                     data    = intermediate_data[[1]],
