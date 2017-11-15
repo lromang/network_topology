@@ -208,6 +208,7 @@ iterative_clustering <- function(data,
     ## Initial solution
     ## ------------------------------
     ## Data should be (lon, lat, pob)!!!
+    ## First iteration return a partition with euclidian distance
     clustered_res    <- clusterize(data,
                                   min_pop_centroids[1],
                                   first_iter       = TRUE,
@@ -250,6 +251,9 @@ iterative_clustering <- function(data,
                   length_net[iter_index] <- sum(tree$p) * n_partitions
                   ## Save results for
                   all_trees[[iter_index]] <- tree
+              }else {
+                  #The node was connected.
+                  length_net[iter_index] <- 0
               }
 
               ## Get Coverage
@@ -271,6 +275,6 @@ iterative_clustering <- function(data,
               n_partitions     <- length(unique(intermediate_data[[1]]$cluster))
           }
     ## Result
-    list('pop' = total_pob, 'net' = length_net, 'trees' = all_trees)
+    list('pop' = total_pob, 'net' = length_net, 'trees' = all_trees, 'plot'= cluster_plot)
 }
 
