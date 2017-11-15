@@ -241,10 +241,12 @@ iterative_clustering <- function(data,
     ## Iterative Network Construction
     ## ------------------------------
     all_trees        <- list()
+    all_n_partitions <- list()
     iter_index       <- 1
     length_net       <- c()
     total_pob        <- c()
     n_partitions     <- length(unique(clustered_data$cluster))
+    
     while(sum(partitioned_data$pob) > min_pop_centroids[length(min_pop_centroids)] &&
           nrow(partitioned_data)    > 1 &&
           iter_index + 1 <= length(min_pop_centroids)){
@@ -255,12 +257,15 @@ iterative_clustering <- function(data,
                                              distance_matrix_  = distance_matrix_,
                                              mode              = mode,
                                              connected_node    = connected_node)
+              ## To get all pob
+              all_n_partitions[iter_index] <- n_partitions
+              
               ## Get length of network
               if (length(intermediate_data) == 4) {
                  
                   tree                   <- prim(intermediate_data[[4]])
                   cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree)
-                  length_net[iter_index] <- sum(tree$p) * n_partitions
+                  length_net[iter_index] <- sum(tree$p) * Reduce("*",all_n_partitions)
                   ## Save results for
                   all_trees[[iter_index]] <- tree
               }else {
@@ -268,14 +273,14 @@ iterative_clustering <- function(data,
                   ## The node was connected.
                   cluster_plot           <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
                 
-                  length_net[iter_index] <- 0
+                  length_net[iter_index] <- length_net
               }
 
               ## Get Coverage
               total_pob[iter_index]  <- sum(get_coverage(centers = intermediate_data[[2]],
                                                     data    = intermediate_data[[1]],
                                                     ## Otro hiperparámetro que podría ser un arreglo
-                                                    radius  = 1000)) * n_partitions
+                                                    radius  = 10000)) * Reduce("*",all_n_partitions)
               ## Get partition according to criterion
               ## min_pop_cirterion could be an (TRUE, FALSE, FALSE,....) sequence
               partitioned_data <- get_partition(intermediate_data[[1]],
@@ -288,7 +293,8 @@ iterative_clustering <- function(data,
               iter_index       <- iter_index + 1
               ## N partitions
               n_partitions     <- length(unique(intermediate_data[[1]]$cluster))
-          }
+    }
+    
     ## Result
     list('pop' = total_pob, 'net' = length_net, 'trees' = all_trees, 'plot'= cluster_plot)
 }
