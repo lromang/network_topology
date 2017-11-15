@@ -275,7 +275,6 @@ iterative_clustering <- function(data,
                 
                   length_net[iter_index] <- length_net
               }
-
               ## Get Coverage
               total_pob[iter_index]  <- sum(get_coverage(centers = intermediate_data[[2]],
                                                     data    = intermediate_data[[1]],
