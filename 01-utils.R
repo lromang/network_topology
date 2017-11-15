@@ -192,13 +192,18 @@ range_quantil <- function (current_value,max_value){
 }
 
 plot_init_cluster <- function (points){
-  factpal <- colorFactor(topo.colors(unique(points$cluster)), points$cluster)
+  factpal <- colorFactor(
+    palette = c('red', 'blue', 'green', 'purple', 'gray'),
+    domain = points$cluster
+  )
   max_value <- max(points$pob)
   map <- leaflet(data= points) %>% addTiles() %>%
     addCircleMarkers(
       radius =~lapply(pob, function(x){range_quantil(x,max_value)}),
       color = ~factpal(cluster),
-      stroke = FALSE, fillOpacity = 0.5
+      stroke = FALSE, 
+      fillOpacity =1,
+      opacity=0.8
     )
   
   for(i in unique(points$cluster)){
@@ -220,7 +225,7 @@ plot_init_cluster <- function (points){
 add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE) {
   if (only_one_point){
     last_plot <- addCircleMarkers(last_plot, lat =points$lat, lng = points$lon,
-                                  radius =3, color= "GREEN", fillOpacity = 1, opacity = 1)
+                                  radius =3, color= "BLACK", fillOpacity = 1, opacity = 1)
     
   }else {
     color <- colorRampPalette(c("yellow", "red"))(1)
