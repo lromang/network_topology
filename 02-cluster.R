@@ -100,7 +100,7 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
                                        dplyr::filter(cluster_data, cluster == cluster_name[idx]))}
                              )
     centers <-do.call(rbind,centers)
-    
+
     ## Distance matrix of centroids!!!!
     ## Need to solve population problem
     dist_tree    <- get_distance_matrix(data.frame(centers),
@@ -257,7 +257,6 @@ iterative_clustering <- function(data,
                                              connected_node    = connected_node)
               ## Get length of network
               if (length(intermediate_data) == 4) {
-                 
                   tree                   <- prim(intermediate_data[[4]])
                   cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree)
                   length_net[iter_index] <- sum(tree$p) * n_partitions
@@ -267,7 +266,6 @@ iterative_clustering <- function(data,
                   ## Cluster with one centroid
                   ## The node was connected.
                   cluster_plot           <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
-                
                   length_net[iter_index] <- 0
               }
               ## Get Coverage

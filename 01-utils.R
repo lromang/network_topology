@@ -41,7 +41,7 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
   system(paste0("curl ", "'", query, "' | jq '.", "[\"routes\"][0][\"legs\"][0][\"distance\"][\"value\"]",
                 "'",
                 " > intermedio.txt"))
-  
+
   distance    <- tryCatch ({
     readr::parse_number(readLines('intermedio.txt'))
   }, warning = function(w){ #problem with parse, try next key
@@ -56,7 +56,7 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
       print("NO MAS REQUEST POR HOY")
       stopifnot(TRUE)
     } })
-  
+
   print(query)
   print(distance)
   if (distance == 0){ #Try with geosphere distance 
@@ -72,6 +72,86 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
     system('rm intermedio.txt')
   }
   distance
+}
+
+## ------------------------------------
+## vanilla clusterize
+## ------------------------------------
+vanilla_get_clusters <- function(points, centers, mode = 'driving', distance_matrix_){
+    ## Weights
+    weights      <- points[,3]/sum(points[,3])
+    clust_assign <- c()
+    for(i in 1:nrow(points)){
+        ## Init Distances
+        cent_dist <- plyr::dlply(centers, 1,
+                           function(t) t <- get_num_distance(origin  = points[i,2:1],
+                                                            destiny = t,
+                                                            distance_matrix_ = distance_matrix_,
+                                                            mode = 'driving'
+                                                            )/weights[i]
+                           )
+        clust_assign[i] <- which(cent_dist == min(unlist(cent_dist)))[1]
+    }
+    clust_assign
+}
+
+## ------------------------------------
+## vanilla update centers
+## ------------------------------------
+vanilla_update_centers <- function(points, assign){
+    points$assign  <- assign
+    p              <- data.table(points)
+    centers        <- p[, list('lat'= mean(lat),
+                              'lon'= mean(lon)),
+                       by = assign]
+    centers$assign <- NULL
+    centers
+}
+
+
+##-------------------------------------
+## Vanilla Distance
+##-------------------------------------
+vanilla_k_means <- function(points, n_centers,
+                           mode  = 'driving',
+                           distance_matrix_,
+                           max_iter = 100){
+    ## ----------------------------------------
+    ## points  = lon, lat, pob
+    ## centers = n_centers
+    ## No need for distance_matrix...changes
+    ## every time
+    ## ----------------------------------------
+
+    ## Initial Centers
+    centers <- data.frame('lat' = sample(seq(min(points$lat),
+                                            max(points$lat),
+                                            by = .001), n_centers),
+                         'lon' = sample(seq(min(points$lon),
+                                            max(points$lon),
+                                            by = .001), n_centers)
+                         )
+    ## Initial Assignment
+    clust_assign <- vanilla_get_clusters(points,
+                                        centers,
+                                        mode,
+                                        distance_matrix_)
+    iters        <- 1
+    repeat{
+        centers        <- vanilla_update_centers(points, clust_assign)
+        n_clust_assign <- vanilla_get_clusters(points,
+                                              centers,
+                                              mode,
+                                              distance_matrix_)
+        if(n_clust_assign == clust_assign || iters >= max_iter){
+            break
+        }
+        ## Update values
+        clust_assign   <- n_clust_assign
+        iters          <- iters + 1
+    }
+    ## Return results
+    list('centers' = centers, 'clusts' = n_clust_assign)
 }
 
 ##-------------------------------------

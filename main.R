@@ -55,7 +55,7 @@ if (!file.exists("distance_matrix.RData")) {
 ## --------------------------------------------------
 data             <- ags_points
 distance_matrix_ <- distance_matrix
-min_pop_centroids = c(1000, 200, 75, 25, 10)
+min_pop_centroids = c(25, 25, 25, 25, 25, 25)
 min_pop_criterion = TRUE
 mode = 'driving'
 
