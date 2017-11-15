@@ -83,31 +83,38 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
     results <- list()
     ## Get Clusters (of all points, with euclidean distance)
     if (centroids > 1) {
-    clusts       <- flexclust::kcca(data[,1:2],
-                                   k       = centroids,
-                                   weights = data$pob/sum(data$pob))
-    clusters     <- as.factor(clusts@cluster)
-    ## Connected_node from the previous iteration
-    cluster_data         <- data
-    cluster_data$cluster <- clusters
-    total_centers        <- length(unique(clusters))
-    cluster_name         <- unique(clusters)
-    centers              <- rbind(clusts@centers, connected_node)
-    ## Only work with valid points
-    ## Last point is connected_node 
-    centers              <- lapply(1:total_centers, function(idx){
-                                       get_nearest_point(centers[idx,1:2],
-                                       dplyr::filter(cluster_data, cluster == cluster_name[idx]))}
-                             )
-    centers <-do.call(rbind,centers)
-
-    ## Distance matrix of centroids!!!!
-    ## Need to solve population problem
-    dist_tree    <- get_distance_matrix(data.frame(centers),
-                                       distance_matrix_,
-                                       mode)
-    results[[1]] <- dist_tree[[1]]
-    results[[2]] <- dist_tree[[2]]
+        ## clusts       <- flexclust::kcca(data[,1:2],
+        ##                               k       = centroids,
+        ##                               weights = data$pob/sum(data$pob))
+        ## clusters     <- as.factor(clusts@cluster)
+        clusts               <- vanilla_k_means(data[,1:2],
+                                           n_centers = centroids,
+                                           mode      = 'driving',
+                                           distance_matrix_,
+                                           max_iter = 100)
+        clusters             <- as.factor(clusts[[2]])
+        ## Connected_node from the previous iteration
+        cluster_data         <- data
+        cluster_data$cluster <- clusters
+        total_centers        <- length(unique(clusters))
+        cluster_name         <- unique(clusters)
+        ## centers              <- rbind(clusts@centers, connected_node)
+        centers              <- rbind(clusts[[1]][,2:1], connected_node)
+        ## Only work with valid points
+        ## Last point is connected_node 
+        centers              <- lapply(1:total_centers, function(idx){
+            get_nearest_point(centers[idx,1:2],
+                              dplyr::filter(cluster_data, cluster == cluster_name[idx]))}
+            )
+        centers <-do.call(rbind,centers)
+        
+        ## Distance matrix of centroids!!!!
+        ## Need to solve population problem
+        dist_tree    <- get_distance_matrix(data.frame(centers),
+                                           distance_matrix_,
+                                           mode)
+        results[[1]] <- dist_tree[[1]]
+        results[[2]] <- dist_tree[[2]]
     } else {
         clusters <- as.factor(1)
         centers <- connected_node
