@@ -59,7 +59,7 @@ get_tree_param <- function(centers, data, m_tree, radius = 1000){
 ## Get Nearest Point
 ##-------------------------------------
 get_nearest_point <- function(point, data){
-    Wdistance <- distGeo(data[, 1:2], point)/data$pob
+    Wdistance <- distGeo(data[, 1:2], point)#/data$pob
     data[which(Wdistance == min(Wdistance))[1], 1:2]
 }
 
@@ -88,7 +88,19 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
                                    weights = data$pob/sum(data$pob))
     clusters     <- as.factor(clusts@cluster)
     ## Connected_node from the previous iteration
-    centers      <- rbind(clusts@centers, connected_node)
+    cluster_data         <- data
+    cluster_data$cluster <- clusters
+    total_centers        <- length(unique(clusters))
+    cluster_name         <- unique(clusters)
+    ## Only work with valid points
+    ## Last point is connected_node 
+    centers              <- lapply(1:total_centers, function(idx){
+                                       get_nearest_point(centers[idx,1:2],
+                                       dplyr::filter(cluster_data, cluster == cluster_name[idx]))}
+                             )
+    centers              <- do.call(rbind,centers)
+    centers              <- rbind(clusts@centers, connected_node)
+    
     ## Distance matrix of centroids!!!!
     ## Need to solve population problem
     dist_tree    <- get_distance_matrix(data.frame(centers),
@@ -163,6 +175,7 @@ clusterize <- function(data,
         ## no intentar clusterizar con un solo centroide
         centroids <- centroids_next
     }
+
     ## Results
     results[[1]] <- cluster_data
     results[[2]] <- centers
@@ -244,15 +257,17 @@ iterative_clustering <- function(data,
                                              connected_node    = connected_node)
               ## Get length of network
               if (length(intermediate_data) == 4) {
-                  ## Pendiente, revisar que pasa en el else 
-                  ## Else implica que es un cluster con un solo centroide
+                 
                   tree                   <- prim(intermediate_data[[4]])
                   cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree)
                   length_net[iter_index] <- sum(tree$p) * n_partitions
                   ## Save results for
                   all_trees[[iter_index]] <- tree
               }else {
-                  #The node was connected.
+                  ## Cluster with one centroid
+                  ## The node was connected.
+                  cluster_plot           <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
+                
                   length_net[iter_index] <- 0
               }
 
