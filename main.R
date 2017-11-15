@@ -39,7 +39,7 @@ names(data) <- c("ent",
 
 ## Work with Aguascalientes
 ## 1 <- Ags
-ags_mun    <- dplyr::filter(data, ent == 2)
+ags_mun    <- dplyr::filter(data, ent == 1)
 ags_points <- dplyr::select(ags_mun, lon, lat, pob)
 
 ## Get voronoi with euclidean distance
