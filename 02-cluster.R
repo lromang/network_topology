@@ -31,7 +31,7 @@ get_tree_clust <- function(tree_m, points){
 ## Get Tree Parameters
 ##-------------------------------------
 get_tree_param <- function(centers, data, m_tree, radius = 1000){
-    centers$pob     <- get_coverage(centers, data, radius)
+    centers$pob     <- get_coverage(centers, data, radius)[[1]]
     centers$cluster <- 1:nrow(centers)
     ## Add Trees
     tree_cluster_filter <- get_tree_clust(tree_m, centers)
@@ -68,12 +68,14 @@ get_nearest_point <- function(point, data){
 ##-------------------------------------
 get_coverage <- function(centers, data, radius = 1000){
     ## Radius in meters
-    center_pop <- c()
+    center_pop    <- c()
+    tot_in_radius <- c()
     for(i in 1:nrow(centers)){
-        center_pop[i] <- sum(data$pob[distGeo(data[,1:2],
-                                             centers[i,1:2]) < radius])
+        in_radius     <- distGeo(data[,1:2], centers[i,1:2]) < radius
+        tot_in_radius <- tot_in_radius + in_radius ## Get data already added
+        center_pop[i] <- sum(data$pob[in_radius])
     }
-    center_pop
+    list(center_pop, tot_in_radius > 0)
 }
 
 ##-------------------------------------
@@ -253,7 +255,7 @@ iterative_clustering <- function(data,
     length_net       <- c()
     total_pob        <- c()
     n_partitions     <- length(unique(clustered_data$cluster))
-    
+
     while(sum(partitioned_data$pob) > min_pop_centroids[length(min_pop_centroids)] &&
           nrow(partitioned_data)    > 1 &&
           iter_index + 1 <= length(min_pop_centroids)){
@@ -266,7 +268,7 @@ iterative_clustering <- function(data,
                                              connected_node    = connected_node)
               ## To get all pob
               all_n_partitions[iter_index] <- n_partitions
-              
+
               ## Get length of network
               if (length(intermediate_data) == 4) {
                   tree                   <- prim(intermediate_data[[4]])
@@ -281,10 +283,16 @@ iterative_clustering <- function(data,
                   length_net[iter_index] <- length_net
               }
               ## Get Coverage
-              total_pob[iter_index]  <- sum(get_coverage(centers = intermediate_data[[2]],
+              coverage               <- get_coverage(centers = intermediate_data[[2]],
                                                     data    = intermediate_data[[1]],
                                                     ## Otro hiperparámetro que podría ser un arreglo
-                                                    radius  = 10000)) * Reduce("*",all_n_partitions)
+                                                    radius  = 10000)
+              covered_locs           <- coverage[[2]]
+              covered_pop            <- coverage[[1]]
+              ## Add pop
+              total_pob[iter_index]  <- sum(covered_pop) * Reduce("*", all_n_partitions)
+              ## Update data (don't know if this is correct????)
+              intermediate_data[[1]] <- intermediate_data[[1]][-covered_locs, ]
               ## Get partition according to criterion
               ## min_pop_cirterion could be an (TRUE, FALSE, FALSE,....) sequence
               partitioned_data <- get_partition(intermediate_data[[1]],
