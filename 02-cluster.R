@@ -92,14 +92,14 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
     cluster_data$cluster <- clusters
     total_centers        <- length(unique(clusters))
     cluster_name         <- unique(clusters)
+    centers              <- rbind(clusts@centers, connected_node)
     ## Only work with valid points
     ## Last point is connected_node 
     centers              <- lapply(1:total_centers, function(idx){
                                        get_nearest_point(centers[idx,1:2],
                                        dplyr::filter(cluster_data, cluster == cluster_name[idx]))}
                              )
-    centers              <- do.call(rbind,centers)
-    centers              <- rbind(clusts@centers, connected_node)
+    centers <-do.call(rbind,centers)
     
     ## Distance matrix of centroids!!!!
     ## Need to solve population problem
