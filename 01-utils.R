@@ -32,12 +32,12 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
   }
   ## Get Distance (START)
   base        <- "https://maps.googleapis.com/maps/api/directions/json?"
-  origin      <- paste0("origin=", paste(origin, collapse = ","))
-  destiny     <- paste0("destination=", paste(destiny, collapse = ","))
+  origin_str  <- paste0("origin=", paste(origin, collapse = ","))
+  destiny_str <- paste0("destination=", paste(destiny, collapse = ","))
   mode        <- paste0("mode=", mode)
   google_key  <- google_keys[this_key]
   key         <- paste0("key=", google_key)
-  query       <- paste(base, origin, destiny, mode, key, sep = "&")
+  query       <- paste(base, origin_str, destiny_str, mode, key, sep = "&")
   system(paste0("curl ", "'", query, "' | jq '.", "[\"routes\"][0][\"legs\"][0][\"distance\"][\"value\"]",
                 "'",
                 " > intermedio.txt"))
@@ -60,7 +60,9 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
   print(query)
   print(distance)
   if (distance == 0){ #Try with geosphere distance 
-    distance <- distm (c(origin[2], origin[1]), c(destiny[2], destiny[1]), fun = distHaversine)
+    distance <- distm (c(origin[,2], origin[,1]),
+                       c(destiny[,2], destiny[,1]), fun = distHaversine)[1]
+    print(distance)
   }
   ## Get Distance (END)
   if(distance >= 0) {
