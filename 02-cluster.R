@@ -81,27 +81,30 @@ get_coverage <- function(centers, data, radius = 1000){
 ##-------------------------------------
 ## Build Network
 ##-------------------------------------
-build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
+build_net <- function(data, distance_matrix_, mode, centroids, connected_node, road = FALSE){
     results <- list()
     ## Get Clusters (of all points, with euclidean distance)
     if (centroids > 1) {
-        ## clusts       <- flexclust::kcca(data[,1:2],
-        ##                               k       = centroids,
-        ##                               weights = data$pob/sum(data$pob))
-        ## clusters     <- as.factor(clusts@cluster)
-        clusts               <- vanilla_k_means(data[,1:3],
-                                           n_centers = centroids,
-                                           mode      = 'driving',
-                                           distance_matrix_,
-                                           max_iter = 100)
-        clusters             <- as.factor(clusts[[2]])
+        if(!road){
+            clusts   <- flexclust::kcca(data[,1:2],
+                                           k       = centroids,
+                                           weights = data$pob/sum(data$pob))
+            clusters <- as.factor(clusts@cluster)
+            centers  <- rbind(clusts@centers, connected_node)
+        } else {
+            clusts   <- vanilla_k_means(data[,1:3],
+                                       n_centers = centroids,
+                                       mode      = 'driving',
+                                       distance_matrix_,
+                                       max_iter = 100)
+            clusters <- as.factor(clusts[[2]])
+            centers  <- rbind(clusts[[1]][,2:1], connected_node)
+        }
         ## Connected_node from the previous iteration
         cluster_data         <- data
         cluster_data$cluster <- clusters
         total_centers        <- length(unique(clusters))
         cluster_name         <- unique(clusters)
-        ## centers              <- rbind(clusts@centers, connected_node)
-        centers              <- rbind(clusts[[1]][,2:1], connected_node)
         ## Only work with valid points
         ## Last point is connected_node 
         centers              <- lapply(1:total_centers, function(idx){
@@ -136,7 +139,8 @@ clusterize <- function(data,
                       first_iter = FALSE,
                       distance_matrix_,
                       mode       = 'driving',
-                      connected_node = c(0, 0)){
+                      connected_node = c(0, 0),
+                      road = FALSE){
     ## Para evitar que haya tantos clusters como puntos
     min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2) 
     ## Número de clusters para empezar la iteración
@@ -159,7 +163,8 @@ clusterize <- function(data,
                                     distance_matrix_,
                                     mode,
                                     centroids,
-                                    connected_node)
+                                    connected_node,
+                                    road)
             ## Res
             dist_m      <- non_euc_res[[1]]
             tree_m      <- non_euc_res[[2]]

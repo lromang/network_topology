@@ -26,7 +26,7 @@ source("02-cluster.R")
 ###############################################
 ##########         MAIN        ################
 ###############################################
-
+set.seed(123454321)
 data        <- read.csv("./data/dataCenso.csv", stringsAsFactors = FALSE)
 data[,1]    <- NULL
 names(data) <- c("ent",
@@ -42,7 +42,7 @@ names(data) <- c("ent",
 ags_mun    <- dplyr::filter(data, ent == 2)
 ags_points <- dplyr::select(ags_mun, lon, lat, pob)
 
-## Get voronoi with euclidean distance
+
 if (!file.exists("distance_matrix.RData")) {
     distance_matrix <- new.env(hash = TRUE)
 }else {
