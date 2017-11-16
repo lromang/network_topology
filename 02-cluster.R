@@ -69,11 +69,11 @@ get_nearest_point <- function(point, data){
 get_coverage <- function(centers, data, radius = 1000){
     ## Radius in meters
     center_pop    <- c()
-    tot_in_radius <- c()
+    tot_in_radius <- rep(FALSE, nrow(data))
     for(i in 1:nrow(centers)){
         in_radius     <- distGeo(data[,1:2], centers[i, 1:2]) < radius
+        center_pop[i] <- sum(data$pob[in_radius && !(tot_in_radius > 0)])
         tot_in_radius <- tot_in_radius + in_radius ## Get data already added
-        center_pop[i] <- sum(data$pob[in_radius])
     }
     list(center_pop, tot_in_radius > 0)
 }
@@ -278,7 +278,7 @@ iterative_clustering <- function(data,
               if (length(intermediate_data) == 4) {
                   tree                   <- prim(intermediate_data[[4]])
                   cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree)
-                  length_net[iter_index] <- sum(tree$p) * Reduce("*",all_n_partitions)
+                  length_net[iter_index] <- sum(tree$p) * Reduce("*", all_n_partitions)
                   ## Save results for
                   all_trees[[iter_index]] <- tree
               }else {

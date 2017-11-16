@@ -59,7 +59,7 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
 
   print(query)
   print(distance)
-  if (distance == 0){ #Try with geosphere distance 
+  if (length(distance) <= 0 || distance == 0){ #Try with geosphere distance 
     distance <- distm (c(origin[,2], origin[,1]),
                        c(destiny[,2], destiny[,1]), fun = distHaversine)[1]
     print(distance)

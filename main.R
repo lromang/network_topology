@@ -39,7 +39,7 @@ names(data) <- c("ent",
 
 ## Work with Aguascalientes
 ## 1 <- Ags
-ags_mun    <- dplyr::filter(data, ent == 2)
+ags_mun    <- dplyr::filter(data, ent == 1)
 ags_points <- dplyr::select(ags_mun, lon, lat, pob)
 
 
@@ -55,16 +55,16 @@ if (!file.exists("distance_matrix.RData")) {
 ## --------------------------------------------------
 data             <- ags_points
 distance_matrix_ <- distance_matrix
-min_pop_centroids = c(25, 25, 25, 25, 25, 25)
-min_pop_criterion = TRUE
+min_pop_centroids = c(1000, 25, 25, 25, 25, 25)
+min_pop_criterion = FALSE
 mode = 'driving'
 
 ## test
 test <- iterative_clustering(data,
                             distance_matrix_,
                             min_pop_centroids = min_pop_centroids,
-                            min_pop_criterion = TRUE,
-                            mode = 'driving')
+                            min_pop_criterion = min_pop_criterion,
+                            mode = mode)
 
 ## --------------------------------------------------
 ## Save hash table
