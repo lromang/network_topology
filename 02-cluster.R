@@ -71,7 +71,7 @@ get_coverage <- function(centers, data, radius = 1000){
     center_pop    <- c()
     tot_in_radius <- c()
     for(i in 1:nrow(centers)){
-        in_radius     <- distGeo(data[,1:2], centers[i,1:2]) < radius
+        in_radius     <- distGeo(data[,1:2], centers[i, 1:2]) < radius
         tot_in_radius <- tot_in_radius + in_radius ## Get data already added
         center_pop[i] <- sum(data$pob[in_radius])
     }
@@ -89,7 +89,7 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node){
         ##                               k       = centroids,
         ##                               weights = data$pob/sum(data$pob))
         ## clusters     <- as.factor(clusts@cluster)
-        clusts               <- vanilla_k_means(data[,1:2],
+        clusts               <- vanilla_k_means(data[,1:3],
                                            n_centers = centroids,
                                            mode      = 'driving',
                                            distance_matrix_,
@@ -306,7 +306,7 @@ iterative_clustering <- function(data,
               ## N partitions
               n_partitions     <- length(unique(intermediate_data[[1]]$cluster))
     }
-    
+
     ## Result
     list('pop' = total_pob, 'net' = length_net, 'trees' = all_trees, 'plot'= cluster_plot)
 }
