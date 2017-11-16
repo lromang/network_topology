@@ -72,7 +72,7 @@ get_coverage <- function(centers, data, radius = 1000){
     tot_in_radius <- rep(FALSE, nrow(data))
     for(i in 1:nrow(centers)){
         in_radius     <- distGeo(data[,1:2], centers[i, 1:2]) < radius
-        center_pop[i] <- sum(data$pob[in_radius && !(tot_in_radius > 0)])
+        center_pop[i] <- sum(data$pob[in_radius & !(tot_in_radius > 0)])
         tot_in_radius <- tot_in_radius + in_radius ## Get data already added
     }
     list(center_pop, tot_in_radius > 0)
@@ -291,7 +291,7 @@ iterative_clustering <- function(data,
               coverage               <- get_coverage(centers = intermediate_data[[2]],
                                                     data    = intermediate_data[[1]],
                                                     ## Otro hiperparámetro que podría ser un arreglo
-                                                    radius  = 10000)
+                                                    radius  = 100)
               covered_locs           <- coverage[[2]]
               covered_pop            <- coverage[[1]]
               ## Add pop

@@ -53,11 +53,11 @@ if (!file.exists("distance_matrix.RData")) {
 ## --------------------------------------------------
 ## Testing
 ## --------------------------------------------------
-data             <- ags_points
-distance_matrix_ <- distance_matrix
-min_pop_centroids = c(1000, 25, 25, 25, 25, 25)
-min_pop_criterion = FALSE
-mode = 'driving'
+data              <- ags_points
+distance_matrix_  <- distance_matrix
+min_pop_centroids <- c(1000, 25, 25, 25, 25, 25)
+min_pop_criterion <- FALSE
+mode              <- 'driving'
 
 ## test
 test <- iterative_clustering(data,
