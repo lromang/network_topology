@@ -27,8 +27,9 @@ source("02-cluster.R")
 ##########         MAIN        ################
 ###############################################
 set.seed(123454321)
-data        <- read.csv("./data/dataCenso.csv", stringsAsFactors = FALSE)
-data[,1]    <- NULL
+data        <- read.csv("./data/data_censo.csv",
+                       stringsAsFactors = FALSE)
+## data[,1]    <- NULL
 names(data) <- c("ent",
                 "mun",
                 "nom_mun",

@@ -112,7 +112,6 @@ build_net <- function(data, distance_matrix_, mode, centroids, connected_node, r
                               dplyr::filter(cluster_data, cluster == cluster_name[idx]))}
             )
         centers <-do.call(rbind,centers)
-        
         ## Distance matrix of centroids!!!!
         ## Need to solve population problem
         dist_tree    <- get_distance_matrix(data.frame(centers),
@@ -297,7 +296,7 @@ iterative_clustering <- function(data,
               ## Add pop
               total_pob[iter_index]  <- sum(covered_pop) * Reduce("*", all_n_partitions)
               ## Update data (don't know if this is correct????)
-              intermediate_data[[1]] <- intermediate_data[[1]][-covered_locs, ]
+              ## intermediate_data[[1]] <- intermediate_data[[1]][-covered_locs, ]
               ## Get partition according to criterion
               ## min_pop_cirterion could be an (TRUE, FALSE, FALSE,....) sequence
               partitioned_data <- get_partition(intermediate_data[[1]],
@@ -311,7 +310,6 @@ iterative_clustering <- function(data,
               ## N partitions
               n_partitions     <- length(unique(intermediate_data[[1]]$cluster))
     }
-
     ## Result
     list('pop' = total_pob, 'net' = length_net, 'trees' = all_trees, 'plot'= cluster_plot)
 }

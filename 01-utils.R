@@ -6,6 +6,8 @@
 
 google_keys <-  readLines('google_keys.key')
 this_key    <- 1
+
+
 ##-------------------------------------
 ## get distance
 ##-------------------------------------
