@@ -51,7 +51,6 @@ get_tree_param <- function(centers, data, m_tree, radius = 1000){
 
     ##
     print(clust_plot)
-
 }
 
 
@@ -292,12 +291,6 @@ iterative_clustering <- function(data,
               ## Add pop
               total_pob[iter_index]  <- sum(covered_pop) *n_partitions
               ## Update data (don't know if this is correct????)
-<<<<<<< HEAD
-              ## intermediate_data[[1]] <- intermediate_data[[1]][-covered_locs, ]
-=======
-              #intermediate_data[[1]] <- intermediate_data[[1]][-covered_locs, ]
->>>>>>> a5bfce89c0b279b95ff3247a98119b7dbc9a4b2d
-              ## Get partition according to criterion
               ## min_pop_cirterion could be an (TRUE, FALSE, FALSE,....) sequence
               partitioned_data <- get_partition(intermediate_data[[1]],
                                                min_pop_criterion)
