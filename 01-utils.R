@@ -77,46 +77,55 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
     if (!is.null(distance_matrix_[[key_2]])) {
         return (distance_matrix_[[key_2]])
     }
-    if (is.na(destiny[1])) {
-        return(0)
-    }
-    ## Get Distance (START)
-    base        <- "https://maps.googleapis.com/maps/api/directions/json?"
-    origin_str  <- paste0("origin=", paste(origin, collapse = ","))
-    destiny_str <- paste0("destination=", paste(destiny, collapse = ","))
-    mode        <- paste0("mode=", mode)
-    google_key  <- google_keys[this_key]
-    key         <- paste0("key=", google_key)
-    query       <- paste(base, origin_str, destiny_str, mode, key, sep = "&")
-    system(paste0("curl ", "'", query, "' | jq '.", "[\"routes\"][0][\"legs\"][0][\"distance\"][\"value\"]",
-                  "'",
-                  " > intermedio.txt"))
-    ## Get Distance
-    distance    <- readr::parse_number(readLines('intermedio.txt'))
-    ## Check if result
-    if (length(google_keys) >= this_key + 1 && length(distance) == 0) { 
-        print("CHANGE KEY")
-        this_key    <- this_key + 1
-        google_key  <- google_keys[this_key]
-        key         <- paste0("key=",google_key)
-        return(tryCatch({
-            RJSONIO::fromJSON(getURL(query))$routes[[1]]$legs[[1]]$distance$value
-        }, error = function(w){0}))
-    } else if(length(google_keys) < this_key + 1){
-        print('NO MORE QUERIES FOR TODAY')
+    if (is.na(destiny[1]) || is.na(origin[1])) {
         return(-1)
     }
-    ## Print query
-    print(query)
-    print(distance)
-    if (length(distance) <= 0 || distance == 0){ #Try with geosphere distance 
-        distance <- distm (c(origin[,2], origin[,1]),
-                          c(destiny[,2], destiny[,1]), fun = distHaversine)[1]
+    ## Default distance value
+    distance <- -1
+    while(length(google_keys) >= this_key + 1 && distance < 0){
+        ## Get Distance (START)
+        base        <- "https://maps.googleapis.com/maps/api/directions/json?"
+        origin_str  <- paste0("origin=", paste(origin, collapse = ","))
+        destiny_str <- paste0("destination=", paste(destiny, collapse = ","))
+        mode        <- paste0("mode=", mode)
+        google_key  <- google_keys[this_key]
+        key         <- paste0("key=", google_key)
+        query       <- paste(base, origin_str, destiny_str, mode, key, sep = "&")
+        system(paste0("curl ",
+                      "'",
+                      query,
+                      "' | jq '.",
+                      "[\"routes\"][0][\"legs\"][0][\"distance\"][\"value\"]",
+                      "'",
+                      " | grep -Ev '^null$'",
+                      " > intermedio.txt"))
+        ## Get Distance
+        distance    <- readr::parse_number(readLines('intermedio.txt'))
+        ## Print query
+        print(query)
         print(distance)
+        if (length(distance) == 0) {
+            print("CHANGE KEY")
+            this_key    <<- this_key + 1
+            google_key  <- google_keys[this_key]
+            key         <- paste0("key=", google_key)
+            distance    <- -1
+        }
+    }
+    ## If no more Queries
+    if(length(google_keys) < this_key + 1){
+        print('NO MORE QUERIES FOR TODAY')
     }
     ## Get Distance (END)
     if(distance >= 0) {
         distance_matrix_[[key_1]] <- distance
+    }
+    if (distance <= 0){
+        print('TRYING GEOSPHERE DISTANCE')
+        distance <- distm (c(origin[,2], origin[,1]),
+                          c(destiny[,2], destiny[,1]),
+                          fun = distHaversine)[1]
+        print(distance)
     }
     if (file.exists("intermedio.txt")) {
         system('rm intermedio.txt')
@@ -231,7 +240,7 @@ get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coor
       ) {
         next
       }
-      
+
       dist_matrix[i, j] <- get_num_distance(points[i, coords_cols],
                                             points[j, coords_cols],
                                             distance_matrix_ ,
@@ -255,7 +264,6 @@ get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coor
                                      'y'     = points[j, 1],
                                      'p'     = dist_matrix[i, j]
                                    ))
-      
     }
   }
   ## Diag = 0

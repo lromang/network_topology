@@ -261,6 +261,13 @@ iterative_clustering <- function(data,
     while(sum(partitioned_data$pob) > min_pop_centroids[length(min_pop_centroids)] &&
           nrow(partitioned_data)    > 1 &&
           iter_index + 1 <= length(min_pop_centroids) ){
+              sprintf(paste0("ITERATION CRITERIA: \n - Population in partition:",
+                             " %d \n - Localities in partition: %d \n - Iter index: ",
+                             " %d"),
+                      sum(partitioned_data$pob),
+                      nrow(partitioned_data),
+                      iter_index
+                      )
               ## Clusterize Data
               intermediate_data <- clusterize(data              = partitioned_data,
                                              min_pop_centroids = min_pop_centroids[iter_index + 1],

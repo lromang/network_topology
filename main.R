@@ -49,7 +49,6 @@ if (!file.exists("distance_matrix.RData")) {
     attach("distance_matrix.RData")
 }
 
-
 ## --------------------------------------------------
 ## Testing
 ## --------------------------------------------------
@@ -69,4 +68,5 @@ test <- iterative_clustering(data,
 ## --------------------------------------------------
 ## Save hash table
 ## --------------------------------------------------
-save(distance_matrix, file = "distance_matrix.RData")
+save(distance_matrix,
+     file = "distance_matrix.RData")
