@@ -80,14 +80,24 @@ get_coverage <- function(centers, data, radius = 1000){
 ##-------------------------------------
 ## Build Network
 ##-------------------------------------
-build_net <- function(data, distance_matrix_, mode, centroids, connected_node, road = FALSE){
+build_net <- function(data,
+                     distance_matrix_,
+                     mode,
+                     centroids,
+                     connected_node,
+                     road = FALSE,
+                     alpha = .7){
     results <- list()
     ## Get Clusters (of all points, with euclidean distance)
+    dist_road <- distances_to_road(data[,2:1]) ## (MIKE) Guardar esto en tabla hash key = 'latlon'
     if (centroids > 1) {
         if(!road){
             clusts   <- flexclust::kcca(data[,1:2],
-                                           k       = centroids,
-                                           weights = data$pob/sum(data$pob))
+                                       k       = centroids,
+                                       weights = (alpha * data$pob/sum(data$pob) +
+                                                  ((1 - alpha) * ( 1 - dist_road/sum(dist_road)))
+                                       )
+                                       )
             clusters <- as.factor(clusts@cluster)
             centers  <- rbind(clusts@centers, connected_node)
         } else {

@@ -54,6 +54,12 @@ distance_to_road <- function(point_){
     res
 }
 
+## ----------------------------------------
+## Get Distance To Road (bulk)
+## ----------------------------------------
+distances_to_road <- function(points){
+    apply(points, 1, function(t) t <- distance_to_road(t))
+}
 
 
 ##-------------------------------------
