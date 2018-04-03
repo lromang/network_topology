@@ -257,17 +257,10 @@ iterative_clustering <- function(data,
     length_net       <- c()
     total_pob        <- c()
     n_partitions     <- length(unique(clustered_data$cluster))
-
+    ## MAIN LOOP
     while(sum(partitioned_data$pob) > min_pop_centroids[length(min_pop_centroids)] &&
           nrow(partitioned_data)    > 1 &&
           iter_index + 1 <= length(min_pop_centroids) ){
-              sprintf(paste0("ITERATION CRITERIA: \n - Population in partition:",
-                             " %d \n - Localities in partition: %d \n - Iter index: ",
-                             " %d"),
-                      sum(partitioned_data$pob),
-                      nrow(partitioned_data),
-                      iter_index
-                      )
               ## Clusterize Data
               intermediate_data <- clusterize(data              = partitioned_data,
                                              min_pop_centroids = min_pop_centroids[iter_index + 1],
@@ -275,8 +268,16 @@ iterative_clustering <- function(data,
                                              distance_matrix_  = distance_matrix_,
                                              mode              = mode,
                                              connected_node    = connected_node)
+              ## PRINT
+              print(sprintf(paste0("ITERATION CRITERIA BEFORE: \n - Population in partition:",
+                             " %d \n - Localities in partition: %d \n - Iter index: ",
+                             " %d"),
+                      sum(partitioned_data$pob),
+                      nrow(partitioned_data),
+                      iter_index
+                      ))
               ## Get length of network
-              if (length(intermediate_data) == 4) {
+              if (length(intermediate_data[[2]]) > 1) {
                   tree                   <- prim(intermediate_data[[4]])
                   cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree)
                   length_net[iter_index] <- sum(tree$p) * n_partitions
@@ -285,7 +286,7 @@ iterative_clustering <- function(data,
               }else {
                   ## Cluster with one centroid
                   ## The node was connected.
-                  cluster_plot           <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
+                  cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
                   break
               }
               ## Get Coverage
@@ -309,6 +310,15 @@ iterative_clustering <- function(data,
               iter_index       <- iter_index + 1
               ## N partitions
               n_partitions     <- length(unique(intermediate_data[[1]]$cluster))
+              ## PRINT
+              print(sprintf(paste0("ITERATION CRITERIA AFTER: \n - Population in partition:",
+                             " %d \n - Localities in partition: %d \n - Iter index: ",
+                             " %d"),
+                            sum(partitioned_data$pob),
+                            nrow(partitioned_data),
+                            iter_index
+                            ))
+
     }
     ## Result
     list('pop' = total_pob, 'net' = length_net, 'trees' = all_trees, 'plot'= cluster_plot)
