@@ -35,12 +35,17 @@ handle_queries <- function(base){
 ## ----------------------------------------
 ## Get Distance To Road
 ## ----------------------------------------
-distance_to_road <- function(point_){
+distance_to_road <- function(point_, road_hash_){
     ## ----------------------------------------
     ## This function uses Google's API Roads to
     ## calculate the nearest road to a given point.
     ## point = geografic point in (lat, lon)
     ## ----------------------------------------
+    point_key <- paste(point_, collapse = ",")
+    if (!is.null(road_hash_[[point_key]] )) {
+      return (road_hash_[[point_key]])
+    }
+    
     res   <- -1
     base  <- "https://roads.googleapis.com/v1/nearestRoads?"
     point <- paste0("points=", paste(point_, collapse = ","))
@@ -50,6 +55,7 @@ distance_to_road <- function(point_){
         nearest_road <- resp$snappedPoints[[1]]$location
         res          <-  distGeo(point_[2:1],
                                 as.numeric(nearest_road)[2:1])
+        road_hash_[[point_key]] <- res
     }
     res
 }
@@ -57,8 +63,8 @@ distance_to_road <- function(point_){
 ## ----------------------------------------
 ## Get Distance To Road (bulk)
 ## ----------------------------------------
-distances_to_road <- function(points){
-    apply(points, 1, function(t) t <- distance_to_road(t))
+distances_to_road <- function(points, road_hash_){
+    apply(points, 1, function(t) t <- distance_to_road(t, road_hash_))
 }
 
 
@@ -366,16 +372,23 @@ plot_init_cluster <- function (points){
 }
 
 
-add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE) {
+add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_index = 0) {
   if (only_one_point){
     last_plot <- addCircleMarkers(last_plot, lat =points$lat, lng = points$lon,
-                                  radius =3, color= "BLACK", fillOpacity = 1, opacity = 1)
+                                  radius =3, color= "blue", fillOpacity = 1, opacity = 1)
     
   }else {
-    color <- colorRampPalette(c("yellow", "red"))(1)
+    color <- colorRampPalette(c( "#ff9933","#ff5050","#990033","#ffff00"))((iter_index %% 4)+1)
     for(i in unique(points$cluster)){
       data_clust <- dplyr::filter(points, cluster == i)
       this_pob   <- sum(data_clust$pob)
+      if (nrow(data_clust) ==2 ){#Create a line with white color 
+        last_plot <- addPolylines(last_plot, lat = as.numeric(data_clust[c(1,2), 2]), 
+                                  lng = as.numeric(data_clust[c(1,2), 1]), color = color)
+      }else if (nrow(data_clust) == 1) {
+        last_plot <- addCircleMarkers(last_plot, lat =data_clust$lat, lng = data_clust$lon,
+                                      radius =1, color= color, fillOpacity = 1, opacity = 1)
+      }else {
       ch <- chull(data_clust)
       last_plot<-addPolygons(last_plot,data = data_clust[c(ch, ch[1]),],   
                              opacity = 0,
@@ -385,11 +398,13 @@ add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE) {
                              popup = ~as.character(this_pob),
                              label = ~as.character(this_pob),
                              color = color)
+      }
     }
     
     for(i in 1:nrow(tree)){
-      last_plot <- addPolylines(last_plot, lat = as.numeric(tree[i, c(1, 3)]), 
-                                lng = as.numeric(tree[i, c(2, 4)]), color = color)
+      last_plot <- addPolylines(last_plot, lat = as.numeric(tree[i, c(1, 3)]),  weight = 3,
+                                opacity = 3,
+                                lng = as.numeric(tree[i, c(2, 4)]), color = "black")
     }
   }
   return (last_plot)

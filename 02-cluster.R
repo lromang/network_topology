@@ -82,22 +82,30 @@ get_coverage <- function(centers, data, radius = 1000){
 ##-------------------------------------
 build_net <- function(data,
                      distance_matrix_,
+                     road_hash_,
                      mode,
                      centroids,
                      connected_node,
                      road = FALSE,
+                     build_with_road,
                      alpha = .7){
     results <- list()
-    ## Get Clusters (of all points, with euclidean distance)
-    dist_road <- distances_to_road(data[,2:1]) ## (MIKE) Guardar esto en tabla hash key = 'latlon'
     if (centroids > 1) {
         if(!road){
-            clusts   <- flexclust::kcca(data[,1:2],
-                                       k       = centroids,
-                                       weights = (alpha * data$pob/sum(data$pob) +
+            if (build_with_road) {
+              ## Get Clusters (of all points, with euclidean distance)
+              dist_road <- distances_to_road(data[,2:1], road_hash_) 
+              clusts   <- flexclust::kcca(data[,1:2],
+                                          k       = centroids,
+                                          weights = (alpha * data$pob/sum(data$pob) +
                                                   ((1 - alpha) * ( 1 - dist_road/sum(dist_road)))
+                                          )
                                        )
-                                       )
+            } else {
+              clusts   <- flexclust::kcca(data[,1:2],
+                                          k       = centroids,
+                                          weights = data$pob/sum(data$pob))
+            }
             clusters <- as.factor(clusts@cluster)
             centers  <- rbind(clusts@centers, connected_node)
         } else {
@@ -146,9 +154,11 @@ clusterize <- function(data,
                       min_pop_centroids,
                       first_iter = FALSE,
                       distance_matrix_,
+                      road_hash_,
                       mode       = 'driving',
                       connected_node = c(0, 0),
-                      road = FALSE){
+                      road = FALSE,
+                      build_with_road){
     ## Para evitar que haya tantos clusters como puntos
     min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2) 
     ## Número de clusters para empezar la iteración
@@ -169,10 +179,12 @@ clusterize <- function(data,
             ## Non Euclidean Clustering
             non_euc_res <- build_net(data,
                                     distance_matrix_,
+                                    road_hash_,
                                     mode,
                                     centroids,
                                     connected_node,
-                                    road)
+                                    road,
+                                    build_with_road = build_with_road)
             ## Res
             dist_m      <- non_euc_res[[1]]
             tree_m      <- non_euc_res[[2]]
@@ -232,22 +244,37 @@ get_partition <- function(data, min_pop_criterion = TRUE){
 ##-------------------------------------
 iterative_clustering <- function(data,
                                 distance_matrix_,
+                                road_hash_,
                                 ## Población mínima por cluster en cada iteración. 
                                 min_pop_centroids = seq(1000, 100, by = -100), 
                                 ## Si se va a usar este criterio o no... actualmente alternativa es max pop
                                 ## podría ser también el cluster más disperso o el menos disperso o
                                 ## mezclas y ver cómo cambia...
                                 min_pop_criterion = TRUE,
-                                mode = 'driving'){
+                                mode = 'driving',
+                                build_with_road   = FALSE,
+                                with_first_iteration = TRUE
+                                ){
     ## ------------------------------
     ## Initial solution
     ## ------------------------------
     ## Data should be (lon, lat, pob)!!!
     ## First iteration return a partition with euclidian distance
-    clustered_res    <- clusterize(data,
+    if (with_first_iteration) {
+      clustered_res    <- clusterize(data,
                                   min_pop_centroids[1],
                                   first_iter       = TRUE,
-                                  distance_matrix_ = distance_matrix_)
+                                  distance_matrix_ = distance_matrix_,
+                                  road_hash_ = road_hash_)
+    } else {
+      clustered_res <- clusterize(    data              = data,
+                                      min_pop_centroids = min_pop_centroids[1],
+                                      first_iter        = FALSE,
+                                      distance_matrix_  = distance_matrix_,
+                                      road_hash_        = road_hash_,
+                                      mode              = mode,
+                                      build_with_road   = build_with_road)
+    }
     centers          <- clustered_res[[2]]
     clustered_data   <- clustered_res[[1]]
     ## First partition
@@ -258,6 +285,8 @@ iterative_clustering <- function(data,
     ## Get Nearest Locality
     connected_node   <- get_nearest_point(connected_node, partitioned_data)
     cluster_plot     <- plot_init_cluster(clustered_res[[1]])
+    cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
+    
 
     ## ------------------------------
     ## Iterative Network Construction
@@ -276,29 +305,10 @@ iterative_clustering <- function(data,
                                              min_pop_centroids = min_pop_centroids[iter_index + 1],
                                              first_iter        = FALSE,
                                              distance_matrix_  = distance_matrix_,
+                                             road_hash_        = road_hash_,
                                              mode              = mode,
-                                             connected_node    = connected_node)
-              ## PRINT
-              print(sprintf(paste0("ITERATION CRITERIA BEFORE: \n - Population in partition:",
-                             " %d \n - Localities in partition: %d \n - Iter index: ",
-                             " %d"),
-                      sum(partitioned_data$pob),
-                      nrow(partitioned_data),
-                      iter_index
-                      ))
-              ## Get length of network
-              if (length(intermediate_data[[2]]) > 1) {
-                  tree                   <- prim(intermediate_data[[4]])
-                  cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree)
-                  length_net[iter_index] <- sum(tree$p) * n_partitions
-                  ## Save results for
-                  all_trees[[iter_index]] <- tree
-              }else {
-                  ## Cluster with one centroid
-                  ## The node was connected.
-                  cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
-                  break
-              }
+                                             connected_node    = connected_node,
+                                             build_with_road   = build_with_road)
               ## Get Coverage
               coverage               <- get_coverage(centers = intermediate_data[[2]],
                                                     data    = intermediate_data[[1]],
@@ -316,18 +326,26 @@ iterative_clustering <- function(data,
               connected_node   <- intermediate_data[[2]][unique(partitioned_data$cluster), ]
               ## Get Nearest Locality
               connected_node   <- get_nearest_point(connected_node, partitioned_data)
+              cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
+              
               ## Partition loop
               iter_index       <- iter_index + 1
               ## N partitions
               n_partitions     <- length(unique(intermediate_data[[1]]$cluster))
-              ## PRINT
-              print(sprintf(paste0("ITERATION CRITERIA AFTER: \n - Population in partition:",
-                             " %d \n - Localities in partition: %d \n - Iter index: ",
-                             " %d"),
-                            sum(partitioned_data$pob),
-                            nrow(partitioned_data),
-                            iter_index
-                            ))
+             
+              ## Get length of network
+              if (nrow(partitioned_data) > 1) {
+                tree                   <- prim(intermediate_data[[4]])
+                cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree, iter_index = iter_index)
+                length_net[iter_index] <- sum(tree$p) * n_partitions
+                ## Save results for
+                all_trees[[iter_index]] <- tree
+              }else {
+                ## Cluster with one centroid
+                ## The node was connected.
+                print ("SOLO UN NODO")
+                cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
+              }
 
     }
     ## Result
