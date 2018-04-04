@@ -107,7 +107,7 @@ build_net <- function(data,
                                           weights = data$pob/sum(data$pob))
             }
             clusters <- as.factor(clusts@cluster)
-            centers  <- clusts@centers
+            centers  <- clusts@centers ## Too many centers
         } else {
             clusts   <- vanilla_k_means(data[,1:3],
                                        n_centers = centroids,
