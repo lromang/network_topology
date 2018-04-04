@@ -40,7 +40,7 @@ names(data) <- c("ent",
 
 ## Work with Aguascalientes
 ## 1 <- Ags
-ags_mun    <- dplyr::filter(data, ent == 10, mun ==4)
+ags_mun    <- dplyr::filter(data, ent == 1)
 ags_points <- dplyr::select(ags_mun, lon, lat, pob)
 
 if (!file.exists("distance_matrix.RData")) {
@@ -72,7 +72,7 @@ test <- iterative_clustering(data,
                             min_pop_centroids = min_pop_centroids,
                             min_pop_criterion = min_pop_criterion,
                             mode = mode,
-                            with_first_iteration=FALSE)
+                            with_first_iteration = TRUE) ## Parámetro de Mike
 
 with_road <-  iterative_clustering(data,
                                    distance_matrix_,
