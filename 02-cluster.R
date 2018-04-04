@@ -308,6 +308,19 @@ iterative_clustering <- function(data,
                                              mode              = mode,
                                              connected_node    = connected_node,
                                              build_with_road   = build_with_road)
+              ## Get length of network
+              if (nrow(partitioned_data) > 1) {
+                tree                   <- prim(intermediate_data[[4]])
+                cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree, iter_index = iter_index)
+                length_net[iter_index] <- sum(tree$p) * n_partitions
+                ## Save results for
+                all_trees[[iter_index]] <- tree
+              }else {
+                ## Cluster with one centroid
+                ## The node was connected.
+                print ("SOLO UN NODO")
+                cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
+              }
               ## Get Coverage
               coverage               <- get_coverage(centers = intermediate_data[[2]],
                                                     data    = intermediate_data[[1]],
@@ -332,19 +345,7 @@ iterative_clustering <- function(data,
               ## N partitions
               n_partitions     <- length(unique(intermediate_data[[1]]$cluster))
              
-              ## Get length of network
-              if (nrow(partitioned_data) > 1) {
-                tree                   <- prim(intermediate_data[[4]])
-                cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree, iter_index = iter_index)
-                length_net[iter_index] <- sum(tree$p) * n_partitions
-                ## Save results for
-                all_trees[[iter_index]] <- tree
-              }else {
-                ## Cluster with one centroid
-                ## The node was connected.
-                print ("SOLO UN NODO")
-                cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
-              }
+             
 
     }
     ## Result
