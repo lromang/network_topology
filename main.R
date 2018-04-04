@@ -65,7 +65,6 @@ min_pop_centroids <- c(1000, 25, 25, 25, 25, 25)
 min_pop_criterion <- FALSE
 mode              <- 'driving'
 
-
 ## test
 test <- iterative_clustering(data,
                             distance_matrix_,
@@ -74,6 +73,7 @@ test <- iterative_clustering(data,
                             min_pop_criterion = min_pop_criterion,
                             mode = mode,
                             with_first_iteration=FALSE)
+
 with_road <-  iterative_clustering(data,
                                    distance_matrix_,
                                    road_hash_,

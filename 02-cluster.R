@@ -107,7 +107,7 @@ build_net <- function(data,
                                           weights = data$pob/sum(data$pob))
             }
             clusters <- as.factor(clusts@cluster)
-            centers  <- rbind(clusts@centers, connected_node)
+            centers  <- clusts@centers
         } else {
             clusts   <- vanilla_k_means(data[,1:3],
                                        n_centers = centroids,
@@ -115,7 +115,7 @@ build_net <- function(data,
                                        distance_matrix_,
                                        max_iter = 100)
             clusters <- as.factor(clusts[[2]])
-            centers  <- rbind(clusts[[1]][,2:1], connected_node)
+            centers  <- clusts[[1]][,2:1]
         }
         ## Connected_node from the previous iteration
         cluster_data         <- data
@@ -128,7 +128,7 @@ build_net <- function(data,
             get_nearest_point(centers[idx,1:2],
                               dplyr::filter(cluster_data, cluster == cluster_name[idx]))}
             )
-        centers <-do.call(rbind,centers)
+        centers <- rbind(do.call(rbind, centers), connected_node)
         ## Distance matrix of centroids!!!!
         ## Need to solve population problem
         dist_tree    <- get_distance_matrix(data.frame(centers),
@@ -285,8 +285,7 @@ iterative_clustering <- function(data,
     ## Get Nearest Locality
     connected_node   <- get_nearest_point(connected_node, partitioned_data)
     cluster_plot     <- plot_init_cluster(clustered_res[[1]])
-    cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
-    
+    cluster_plot     <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
 
     ## ------------------------------
     ## Iterative Network Construction
