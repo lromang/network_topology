@@ -329,7 +329,7 @@ iterative_clustering <- function(data,
               covered_locs           <- coverage[[2]]
               covered_pop            <- coverage[[1]]
               ## Add pop
-              total_pob[iter_index]  <- sum(covered_pop) *n_partitions
+              total_pob[iter_index]  <- sum(covered_pop) ## * n_partitions // Idea de Ante
               ## Update data (don't know if this is correct????)
               ## min_pop_cirterion could be an (TRUE, FALSE, FALSE,....) sequence
               partitioned_data <- get_partition(intermediate_data[[1]],
