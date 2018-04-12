@@ -62,7 +62,7 @@ data              <- ags_points
 distance_matrix_  <- distance_matrix
 road_hash_        <- road_hash
 min_pop_centroids <- c(1000, 25, 25, 25, 25, 25)
-min_pop_criterion <- TRUE
+min_pop_criterion <- c(FALSE,FALSE,TRUE)
 mode              <- 'driving'
 
 ## test
@@ -81,7 +81,7 @@ with_road <-  iterative_clustering(data,
                                    min_pop_criterion = min_pop_criterion,
                                    mode = mode,
                                    build_with_road = TRUE,
-                                   with_first_iteration=FALSE)
+                                   with_first_iteration=TRUE)
 
 ## --------------------------------------------------
 ## Save hash table

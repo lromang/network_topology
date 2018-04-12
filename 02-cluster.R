@@ -250,7 +250,7 @@ iterative_clustering <- function(data,
                                 ## Si se va a usar este criterio o no... actualmente alternativa es max pop
                                 ## podría ser también el cluster más disperso o el menos disperso o
                                 ## mezclas y ver cómo cambia...
-                                min_pop_criterion = TRUE,
+                                min_pop_criterion = c(TRUE, TRUE, FALSE, FALSE),
                                 mode = 'driving',
                                 build_with_road   = FALSE,
                                 with_first_iteration = TRUE
@@ -279,7 +279,7 @@ iterative_clustering <- function(data,
     clustered_data   <- clustered_res[[1]]
     ## First partition
     partitioned_data <- get_partition(clustered_data,
-                                     min_pop_criterion)
+                                     min_pop_criterion[1])
     ## Connected_node
     connected_node   <- centers[unique(partitioned_data$cluster), ]
     ## Get Nearest Locality
@@ -332,8 +332,9 @@ iterative_clustering <- function(data,
               total_pob[iter_index]  <- sum(covered_pop) ## * n_partitions // Idea de Ante
               ## Update data (don't know if this is correct????)
               ## min_pop_cirterion could be an (TRUE, FALSE, FALSE,....) sequence
+              
               partitioned_data <- get_partition(intermediate_data[[1]],
-                                               min_pop_criterion)
+                                               min_pop_criterion[min(length(min_pop_criterion),iter_index+1)])
               ## Connected_node
               connected_node   <- intermediate_data[[2]][unique(partitioned_data$cluster), ]
               ## Get Nearest Locality
