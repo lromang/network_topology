@@ -353,7 +353,9 @@ plot_init_cluster <- function (points){
       color = ~factpal(cluster),
       stroke = FALSE, 
       fillOpacity =1,
-      opacity=0.8
+      opacity=0.8,
+      popup = ~as.character(nom_loc),
+      label = ~as.character(nom_loc)
     )
   
   for(i in unique(points$cluster)){
@@ -372,12 +374,14 @@ plot_init_cluster <- function (points){
 }
 
 
-add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_index = 0) {
+add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_index = 0, with_labels=FALSE) {
   if (only_one_point){
     last_plot <- addCircleMarkers(last_plot, lat =points$lat, lng = points$lon,
-                                  radius =3, color= "blue", fillOpacity = 1, opacity = 1)
+                                  radius =4, color= "blue", fillOpacity = 1, opacity = 1,
+                                  popup = ~as.character(points$nom_loc))
     
   }else {
+   
     color <- colorRampPalette(c( "#ff9933","#ff5050","#990033","#ffff00"))((iter_index %% 4)+1)
     for(i in unique(points$cluster)){
       data_clust <- dplyr::filter(points, cluster == i)
@@ -405,6 +409,29 @@ add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_i
       last_plot <- addPolylines(last_plot, lat = as.numeric(tree[i, c(1, 3)]),  weight = 3,
                                 opacity = 3,
                                 lng = as.numeric(tree[i, c(2, 4)]), color = "black")
+      if (with_labels) {
+      this_p <- tree[i,1:2]
+      names(this_p) <- c("lat", "lon")
+      this_p <- join(this_p, points, by=c("lat","lon"))
+      last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(1)]), 
+                                    lng = as.numeric(tree[i, c(2)]),
+                                    radius =3, color= "orange", fillOpacity = 1, opacity = 1,
+                                    popup = ~as.character(this_p$nom_loc),
+                                    label = ~as.character(this_p$nom_loc),
+                                    labelOptions = labelOptions(noHide = T, direction = "right")
+                                    )
+      this_p <- tree[i,3:4]
+      names(this_p) <- c("lat", "lon")
+      this_p <- join(this_p, points,by=c("lat","lon"))
+      last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(3)]), 
+                                    lng = as.numeric(tree[i, c(4)]),
+                                    radius =3, color= "orange", fillOpacity = 1, opacity = 1,
+                                    popup = ~as.character(this_p$nom_loc),
+                                    label = ~as.character(this_p$nom_loc),
+                                    labelOptions = labelOptions(noHide = T, direction = "right")
+                                  )
+      
+      }
     }
   }
   return (last_plot)

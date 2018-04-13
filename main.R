@@ -41,7 +41,9 @@ names(data) <- c("ent",
 ## Work with Aguascalientes
 ## 1 <- Ags
 ags_mun    <- dplyr::filter(data, ent == 1)
-ags_points <- dplyr::select(ags_mun, lon, lat, pob)
+Encoding(ags_mun$nom_loc) <- "UTF-8"
+ags_mun$nom_loc <- iconv(ags_mun$nom_loc, "UTF-8", "UTF-8",sub='')
+ags_points <- dplyr::select(ags_mun, lon, lat, pob,nom_loc)
 
 if (!file.exists("distance_matrix.RData")) {
     distance_matrix <- new.env(hash = TRUE)
@@ -64,7 +66,9 @@ road_hash_        <- road_hash
 min_pop_centroids <- c(1000, 25, 25, 25, 25, 25)
 min_pop_criterion <- c(FALSE,FALSE,TRUE)
 mode              <- 'driving'
-
+with_first_iteration  <-  TRUE
+build_with_road  <- TRUE
+plot_with_labels <- FALSE
 ## test
 test <- iterative_clustering(data,
                             distance_matrix_,
@@ -72,7 +76,8 @@ test <- iterative_clustering(data,
                             min_pop_centroids = min_pop_centroids,
                             min_pop_criterion = min_pop_criterion,
                             mode = mode,
-                            with_first_iteration = TRUE) ## Parámetro de Mike
+                            with_first_iteration = TRUE,
+                            plot_with_labels = plot_with_labels) ## Parámetro de Mike
 
 with_road <-  iterative_clustering(data,
                                    distance_matrix_,
@@ -81,7 +86,8 @@ with_road <-  iterative_clustering(data,
                                    min_pop_criterion = min_pop_criterion,
                                    mode = mode,
                                    build_with_road = TRUE,
-                                   with_first_iteration=TRUE)
+                                   with_first_iteration=TRUE,
+                                   plot_with_labels = plot_with_labels)
 
 ## --------------------------------------------------
 ## Save hash table

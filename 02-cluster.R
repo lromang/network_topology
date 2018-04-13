@@ -58,6 +58,9 @@ get_tree_param <- function(centers, data, m_tree, radius = 1000){
 ## Get Nearest Point
 ##-------------------------------------
 get_nearest_point <- function(point, data){
+   if (length(point) >2) {
+     point <- point[,1:2]
+   }
     Wdistance <- distGeo(data[, 1:2], point)#/data$pob
     data[which(Wdistance == min(Wdistance))[1], 1:2]
 }
@@ -170,9 +173,10 @@ clusterize <- function(data,
     results      <- list()
     repeat{
         if(first_iter){
-            cclusters <- flexclust::kcca(data[,1:2],
+            cclusters <- flexclust::kcca(data[,c(1,2)],
                                         k       = centroids,
                                         weights = data$pob/sum(data$pob))
+            
             clusters  <- cclusters@cluster
             centers   <- cclusters@centers
         } else {
@@ -189,7 +193,7 @@ clusterize <- function(data,
             dist_m      <- non_euc_res[[1]]
             tree_m      <- non_euc_res[[2]]
             clusters    <- non_euc_res[[3]]
-            centers     <- non_euc_res[[4]]
+            centers     <- join(non_euc_res[[4]],data,by=c("lat","lon"))
         }
         ## Check condition
         cluster_data$cluster <- clusters
@@ -253,7 +257,8 @@ iterative_clustering <- function(data,
                                 min_pop_criterion = c(TRUE, TRUE, FALSE, FALSE),
                                 mode = 'driving',
                                 build_with_road   = FALSE,
-                                with_first_iteration = TRUE
+                                with_first_iteration = TRUE,
+                                plot_with_labels = FALSE
                                 ){
     ## ------------------------------
     ## Initial solution
@@ -285,7 +290,7 @@ iterative_clustering <- function(data,
     ## Get Nearest Locality
     connected_node   <- get_nearest_point(connected_node, partitioned_data)
     cluster_plot     <- plot_init_cluster(clustered_res[[1]])
-    cluster_plot     <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
+    cluster_plot     <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE, with_labels=plot_with_labels)
 
     ## ------------------------------
     ## Iterative Network Construction
@@ -311,7 +316,7 @@ iterative_clustering <- function(data,
               ## Get length of network
               if (nrow(partitioned_data) > 1) {
                 tree                   <- prim(intermediate_data[[4]])
-                cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree, iter_index = iter_index)
+                cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree, iter_index = iter_index, with_labels = plot_with_labels)
                 length_net[iter_index] <- sum(tree$p) * n_partitions
                 ## Save results for
                 all_trees[[iter_index]] <- tree
@@ -319,7 +324,7 @@ iterative_clustering <- function(data,
                 ## Cluster with one centroid
                 ## The node was connected.
                 print ("SOLO UN NODO")
-                cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
+                cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE, plot_with_labels = plot_with_labels)
               }
               ## Get Coverage
               coverage               <- get_coverage(centers = intermediate_data[[2]],
