@@ -343,17 +343,18 @@ range_quantil <- function (current_value,max_value){
 
 plot_init_cluster <- function (points){
   factpal <- colorFactor(
-    palette = c('red', 'blue', 'green', 'purple', 'gray'),
+    palette = c('red', 'blue', 'orange', 'purple', 'gray'),
     domain = points$cluster
   )
   max_value <- max(points$pob)
-  map <- leaflet(data= points) %>% addTiles() %>%
+  
+  map <- leaflet(data= points) %>% addTiles(group = "OSM(default)")  %>%
     addCircleMarkers(
       radius =~lapply(pob, function(x){range_quantil(x,max_value)}),
       color = ~factpal(cluster),
       stroke = FALSE, 
       fillOpacity =1,
-      opacity=0.8,
+      opacity=0.6,
       popup = ~as.character(nom_loc),
       label = ~as.character(nom_loc)
     )
@@ -373,11 +374,26 @@ plot_init_cluster <- function (points){
   return (map )
 }
 
-
+mark_as_connected_plot <- function (last_plot, tree) {
+  for(i in 1:nrow(tree)){
+    last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(1)]), 
+                                  lng = as.numeric(tree[i, c(2)]),
+                                radius =3, color= "green", fillOpacity = 1, opacity = 1
+    )
+      
+      
+    last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(3)]), 
+                                    lng = as.numeric(tree[i, c(4)]),
+                                    radius =3, color= "green", fillOpacity = 1, opacity = 1
+    )
+      
+    }
+    return (last_plot) 
+}
 add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_index = 0, with_labels=FALSE) {
   if (only_one_point){
     last_plot <- addCircleMarkers(last_plot, lat =points$lat, lng = points$lon,
-                                  radius =4, color= "blue", fillOpacity = 1, opacity = 1,
+                                  radius =6, color= "green", fillOpacity = 1, opacity = 1,
                                   popup = ~as.character(points$nom_loc))
     
   }else {
@@ -387,8 +403,8 @@ add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_i
       data_clust <- dplyr::filter(points, cluster == i)
       this_pob   <- sum(data_clust$pob)
       if (nrow(data_clust) ==2 ){#Create a line with white color 
-        last_plot <- addPolylines(last_plot, lat = as.numeric(data_clust[c(1,2), 2]), 
-                                  lng = as.numeric(data_clust[c(1,2), 1]), color = color)
+        #last_plot <- addPolylines(last_plot, lat = as.numeric(data_clust[c(1,2), 2]), 
+        #                          lng = as.numeric(data_clust[c(1,2), 1]), color = color)
       }else if (nrow(data_clust) == 1) {
         last_plot <- addCircleMarkers(last_plot, lat =data_clust$lat, lng = data_clust$lon,
                                       radius =1, color= color, fillOpacity = 1, opacity = 1)
@@ -410,27 +426,39 @@ add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_i
                                 opacity = 3,
                                 lng = as.numeric(tree[i, c(2, 4)]), color = "black")
       if (with_labels) {
-      this_p <- tree[i,1:2]
-      names(this_p) <- c("lat", "lon")
-      this_p <- join(this_p, points, by=c("lat","lon"))
-      last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(1)]), 
-                                    lng = as.numeric(tree[i, c(2)]),
-                                    radius =3, color= "orange", fillOpacity = 1, opacity = 1,
-                                    popup = ~as.character(this_p$nom_loc),
-                                    label = ~as.character(this_p$nom_loc),
-                                    labelOptions = labelOptions(noHide = T, direction = "right")
-                                    )
-      this_p <- tree[i,3:4]
-      names(this_p) <- c("lat", "lon")
-      this_p <- join(this_p, points,by=c("lat","lon"))
-      last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(3)]), 
-                                    lng = as.numeric(tree[i, c(4)]),
-                                    radius =3, color= "orange", fillOpacity = 1, opacity = 1,
-                                    popup = ~as.character(this_p$nom_loc),
-                                    label = ~as.character(this_p$nom_loc),
-                                    labelOptions = labelOptions(noHide = T, direction = "right")
-                                  )
-      
+        this_p <- tree[i,1:2]
+        names(this_p) <- c("lat", "lon")
+        this_p <- join(this_p, points, by=c("lat","lon"))
+        label_p <- this_p$nom_loc
+        this_p_2 <- tree[i,3:4]
+        names(this_p_2) <- c("lat", "lon")
+        this_p_2 <- join(this_p_2, points,by=c("lat","lon"))
+        label_p_2 <- this_p_2$nom_loc
+        last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(1)]), 
+                                      lng = as.numeric(tree[i, c(2)]),
+                                      radius =3, color= "red", fillOpacity = 1, opacity = 1,
+                                      label = ~as.character(label_p),
+                                      labelOptions = labelOptions(noHide = T, direction = "right")
+        )
+        
+        last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(3)]), 
+                                      lng = as.numeric(tree[i, c(4)]),
+                                      radius =3, color= "red", fillOpacity = 1, opacity = 1,
+                                      label = ~as.character(label_p_2),
+                                      labelOptions = labelOptions(noHide = T, direction = "right")
+        )
+      } else {
+        last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(1)]), 
+                                      lng = as.numeric(tree[i, c(2)]),
+                                      radius =3, color= "red", fillOpacity = 1, opacity = 1
+                                      )
+        
+        
+        last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(3)]), 
+                                      lng = as.numeric(tree[i, c(4)]),
+                                      radius =3, color= "red", fillOpacity = 1, opacity = 1
+                                      )
+        
       }
     }
   }
