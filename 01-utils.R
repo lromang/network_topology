@@ -41,6 +41,9 @@ distance_to_road <- function(point_, road_hash_){
     ## calculate the nearest road to a given point.
     ## point = geografic point in (lat, lon)
     ## ----------------------------------------
+    if (! with_real_distance){
+      return 
+    }
     point_key <- paste(point_, collapse = ",")
     if (!is.null(road_hash_[[point_key]] )) {
       return (road_hash_[[point_key]])
@@ -71,13 +74,19 @@ distances_to_road <- function(points, road_hash_){
 ##-------------------------------------
 ## get distance
 ##-------------------------------------
-get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'){
+get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving', with_real_distance){
     ##-------------------------------------
     ## This function uses Google's API directions to
     ## calculate the driving distance between two given points.
     ## origin  = geografic point in (latitude, longitude) format
     ## destiny = geografic point in (latitude, longitude) format
     ##-------------------------------------
+    if (!with_real_distance){
+      distance <- distm (c(origin[,2], origin[,1]),
+                         c(destiny[,2], destiny[,1]),
+                         fun = distHaversine)[1]
+      return (distance)
+    }
     ## Check if origin destiny is in dataframe
     key_part1 <- paste(origin, collapse = ",")
     key_part2 <- paste(destiny, collapse = ",")
@@ -148,7 +157,7 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
 ## ------------------------------------
 ## vanilla clusterize
 ## ------------------------------------
-vanilla_get_clusters <- function(points, centers, mode = 'driving', distance_matrix_){
+vanilla_get_clusters <- function(points, centers, mode = 'driving', distance_matrix_, with_real_distance=TRUE){
     ## Weights
     weights      <- points[,3]/sum(points[,3])
     clust_assign <- c()
@@ -158,7 +167,8 @@ vanilla_get_clusters <- function(points, centers, mode = 'driving', distance_mat
                            function(t) t <- get_num_distance(origin  = points[i,2:1],
                                                             destiny = t,
                                                             distance_matrix_ = distance_matrix_,
-                                                            mode = 'driving'
+                                                            mode = 'driving',
+                                                            with_real_distance = with_real_distance
                                                             )/weights[i]
                            )
         clust_assign[i] <- which(cent_dist == min(unlist(cent_dist)))[1]
@@ -228,7 +238,7 @@ vanilla_k_means <- function(points, n_centers,
 ##-------------------------------------
 ## get distance matrix
 ##-------------------------------------
-get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coords_cols = 2:1){
+get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coords_cols = 2:1, with_real_distance=TRUE){
   ##-------------------------------------
   ## This function uses Google's API directions to
   ## calculate the driving distance between each point.
@@ -256,7 +266,8 @@ get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coor
       dist_matrix[i, j] <- get_num_distance(points[i, coords_cols],
                                             points[j, coords_cols],
                                             distance_matrix_ ,
-                                            mode)
+                                            mode, 
+                                            with_real_distance)
       dist_matrix[j, i] <- dist_matrix[i, j]
       ## Tree Matrix
       tree_matrix         <- rbind(tree_matrix,

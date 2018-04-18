@@ -91,7 +91,8 @@ build_net <- function(data,
                      connected_node,
                      road = FALSE,
                      build_with_road,
-                     alpha = .7){
+                     alpha = .7,
+                     with_real_distance=TRUE){
     results <- list()
     if (centroids > 1) {
         if(!road){
@@ -134,9 +135,10 @@ build_net <- function(data,
         centers <- rbind(do.call(rbind, centers), connected_node)
         ## Distance matrix of centroids!!!!
         ## Need to solve population problem
-        dist_tree    <- get_distance_matrix(data.frame(centers),
-                                           distance_matrix_,
-                                           mode)
+        dist_tree    <- get_distance_matrix(points =data.frame(centers),
+                                           distance_matrix_ =  distance_matrix_,
+                                           mode=mode,
+                                           with_real_distance=with_real_distance)
         results[[1]] <- dist_tree[[1]]
         results[[2]] <- dist_tree[[2]]
     } else {
@@ -161,11 +163,12 @@ clusterize <- function(data,
                       mode       = 'driving',
                       connected_node = c(0, 0),
                       road = FALSE,
-                      build_with_road){
+                      build_with_road, 
+                      with_real_distance = TRUE){
     ## Para evitar que haya tantos clusters como puntos
     min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2) 
     ## Número de clusters para empezar la iteración
-    centroids    <- floor((nrow(data) * .5) + 1)
+    centroids    <- floor((nrow(data) * .2) + 1)
     cluster_data <- data.table(data)
     centers      <- c()
     dist_m       <- list()
@@ -188,7 +191,8 @@ clusterize <- function(data,
                                     centroids,
                                     connected_node,
                                     road,
-                                    build_with_road = build_with_road)
+                                    build_with_road = build_with_road,
+                                    with_real_distance = with_real_distance)
             ## Res
             dist_m      <- non_euc_res[[1]]
             tree_m      <- non_euc_res[[2]]
@@ -258,7 +262,8 @@ iterative_clustering <- function(data,
                                 mode = 'driving',
                                 build_with_road   = FALSE,
                                 plot_with_labels = FALSE, # Parametro para plotear con nombre de las localidades
-                                show_history_plot = TRUE # Parametro para regresar una lista con el historico de las graficas
+                                show_history_plot = TRUE, # Parametro para regresar una lista con el historico de las graficas
+                                with_real_distance = TRUE #Parametro para determinar si la matriz de distancia se hace con distancia carretera
                                 ){
     ## ------------------------------
     ## Initial solution
@@ -270,7 +275,8 @@ iterative_clustering <- function(data,
                                  min_pop_centroids[1],
                                  first_iter       = TRUE,
                                  distance_matrix_ = distance_matrix_,
-                                 road_hash_ = road_hash_)
+                                 road_hash_ = road_hash_,
+                                 with_real_distance = with_real_distance)
     centers          <- clustered_res[[2]]
     clustered_data   <- clustered_res[[1]]
     ## First partition
@@ -305,9 +311,11 @@ iterative_clustering <- function(data,
                                              road_hash_        = road_hash_,
                                              mode              = mode,
                                              connected_node    = connected_node,
-                                             build_with_road   = build_with_road)
+                                             build_with_road   = build_with_road,
+                                             with_real_distance = with_real_distance)
               ## Get length of network
               if (nrow(partitioned_data) > 1) {
+                print(intermediate_data)
                 tree                   <- prim(intermediate_data[[4]])
                 cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree, iter_index = iter_index, with_labels = plot_with_labels)
                 cluster_plot           <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
@@ -348,6 +356,14 @@ iterative_clustering <- function(data,
               ## N partitions
               n_partitions     <- length(unique(intermediate_data[[1]]$cluster))
               cluster_plot     <- mark_as_connected_plot(cluster_plot,tree) 
+              print ("Criterios de paros")
+              print("Minima poblacion de la iteracion")
+              print(sum(partitioned_data$pob) > min_pop_centroids[length(min_pop_centroids)])
+              print("Minimo numero de nodos")
+              print(nrow(partitioned_data)> 1)
+              print(partitioned_data)
+              print ("Criterio de paro, max num iteraciones")
+              print( iter_index + 1 <= length(min_pop_centroids))
     }
     history_plot[[iter_index+1]] <- cluster_plot
     ## Result

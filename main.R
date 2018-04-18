@@ -71,6 +71,7 @@ run_test <- function(pop_criterion) {
   mode              <- 'driving'
   plot_with_labels <- FALSE
   show_history_plot <- FALSE
+  with_real_distance <- FALSE
   without_road <- iterative_clustering(data,
                                distance_matrix_,
                                road_hash_,
@@ -78,33 +79,33 @@ run_test <- function(pop_criterion) {
                                min_pop_criterion = pop_criterion,
                                mode = mode,
                                plot_with_labels = plot_with_labels,
-                               show_history_plot = show_history_plot)
-  
-  with_road <-  iterative_clustering(data,
-                                     distance_matrix_,
-                                     road_hash_,
-                                     min_pop_centroids = min_pop_centroids,
-                                     min_pop_criterion = pop_criterion,
-                                     mode = mode,
-                                     build_with_road = TRUE,
-                                     plot_with_labels = plot_with_labels,
-                                     show_history_plot= show_history_plot)
-  return (list("with_road"=with_road, "without_road"=without_road))
-}
+                               show_history_plot = show_history_plot,
+                               with_real_distance = with_real_distance)
+  return (list("without_road"=without_road))
+}  
+#  with_road <-  iterative_clustering(data,
+#                                     distance_matrix_,
+#                                     road_hash_,
+#                                     min_pop_centroids = min_pop_centroids,
+#                                     min_pop_criterion = pop_criterion,
+#                                     mode = mode,
+#                                     build_with_road = TRUE,
+#                                     plot_with_labels = plot_with_labels,
+#                                     show_history_plot= show_history_plot,
+#                                     with_real_distance = with_real_distance)
+#  return (list("with_road"=with_road, "without_road"=without_road))
+#}
 
 
 
 max_pop_always  <- run_test(c(FALSE))
 max_pop_always[[1]]$plot
-max_pop_always[[2]]$plot
 
 max_min_min <- run_test(c(FALSE,TRUE))
 max_min_min[[1]]$plot
-max_min_min[[2]]$plot
 
 min_pop_always   <- run_test(c(TRUE))
 min_pop_always[[1]]$plot
-min_pop_always[[2]]$plot
 
 ## --------------------------------------------------
 ## Save hash table
