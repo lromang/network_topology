@@ -50,7 +50,6 @@ get_tree_param <- function(centers, data, m_tree, radius = 1000){
     }
 
     ##
-    print(clust_plot)
 }
 
 
@@ -129,16 +128,26 @@ build_net <- function(data,
         ## Only work with valid points
         ## Last point is connected_node 
         centers              <- lapply(1:total_centers, function(idx){
-            get_nearest_point(centers[idx,1:2],
-                              dplyr::filter(cluster_data, cluster == cluster_name[idx]))}
+                              if ( 
+                                  nrow(dplyr::filter(dplyr::filter(cluster_data, cluster == cluster_name[idx]),
+                                  lat == connected_node$lat & lon == connected_node$lon)) ==1){
+                                return (connected_node[c("lon","lat")])
+                              }
+                              else {
+                                return (get_nearest_point(centers[idx,1:2],
+                               dplyr::filter(cluster_data, cluster == cluster_name[idx])))
+                              }
+                            }
             )
-        centers <- rbind(do.call(rbind, centers), connected_node)
+        #centers <- rbind(do.call(rbind, centers) , connected_node)
+        centers <- do.call(rbind, centers)
         ## Distance matrix of centroids!!!!
         ## Need to solve population problem
         dist_tree    <- get_distance_matrix(points =data.frame(centers),
                                            distance_matrix_ =  distance_matrix_,
                                            mode=mode,
                                            with_real_distance=with_real_distance)
+        
         results[[1]] <- dist_tree[[1]]
         results[[2]] <- dist_tree[[2]]
     } else {
@@ -210,8 +219,9 @@ clusterize <- function(data,
         if(min_pop_clust >= min_pop_centroids || centroids_next <= 2){
             print(sprintf('Min Pop Clust = %i, Centroids = %i',
                           min_pop_clust,
-                          centroids))
-            break
+                          centroids
+                          ))
+              break
         }
         ## Se hace la actualización después de verificar para
         ## no intentar clusterizar con un solo centroide
@@ -272,16 +282,21 @@ iterative_clustering <- function(data,
     ## First iteration return a partition with euclidian distance
     history_plot <- list()
     clustered_res <- clusterize(data,
-                                 min_pop_centroids[1],
-                                 first_iter       = TRUE,
-                                 distance_matrix_ = distance_matrix_,
-                                 road_hash_ = road_hash_,
-                                 with_real_distance = with_real_distance)
+                                   min_pop_centroids[1],
+                                   first_iter       = TRUE,
+                                   distance_matrix_ = distance_matrix_,
+                                   road_hash_ = road_hash_,
+                                   with_real_distance = with_real_distance)
     centers          <- clustered_res[[2]]
     clustered_data   <- clustered_res[[1]]
     ## First partition
-    partitioned_data <- get_partition(clustered_data,
-                                     min_pop_criterion[1])
+    #partitioned_data <- get_partition(clustered_data,
+    #                                 min_pop_criterion[1])
+    
+    #First iteration always use puerto carlos as reference 
+    aux <- clustered_data$cluster[which(clustered_data$nom_loc == "Puerto Carlos")]
+    partitioned_data <-  dplyr::filter(clustered_data, cluster == aux[1])
+    
     ## Connected_node
     connected_node   <- centers[unique(partitioned_data$cluster), ]
     ## Get Nearest Locality
@@ -313,9 +328,9 @@ iterative_clustering <- function(data,
                                              connected_node    = connected_node,
                                              build_with_road   = build_with_road,
                                              with_real_distance = with_real_distance)
+                                              
               ## Get length of network
-              if (nrow(partitioned_data) > 1) {
-                print(intermediate_data)
+              if (nrow(partitioned_data) > 1 && length(intermediate_data) == 4) {
                 tree                   <- prim(intermediate_data[[4]])
                 cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree, iter_index = iter_index, with_labels = plot_with_labels)
                 cluster_plot           <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
@@ -329,7 +344,7 @@ iterative_clustering <- function(data,
                 ## Cluster with one centroid
                 ## The node was connected.
                 print ("SOLO UN NODO")
-                cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE, plot_with_labels = plot_with_labels)
+                cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE, with_labels = plot_with_labels)
                 history_plot[[iter_index+1]] <- cluster_plot
                 
               }
@@ -348,22 +363,23 @@ iterative_clustering <- function(data,
               partitioned_data <- get_partition(intermediate_data[[1]],
                                                min_pop_criterion[min(length(min_pop_criterion),iter_index+1)])
               ## Connected_node
-              connected_node   <- intermediate_data[[2]][unique(partitioned_data$cluster), ]
+              #connected_node   <- intermediate_data[[2]][unique(partitioned_data$cluster), ]
               ## Get Nearest Locality
-              connected_node   <- get_nearest_point(connected_node, partitioned_data)
+              #connected_node   <- get_nearest_point(connected_node, partitioned_data)
+              connected_node    <- dplyr::filter(partitioned_data, lat %in%tree$x & lon %in% tree$y)[1,]
               ## Partition loop
               iter_index       <- iter_index + 1
               ## N partitions
               n_partitions     <- length(unique(intermediate_data[[1]]$cluster))
               cluster_plot     <- mark_as_connected_plot(cluster_plot,tree) 
-              print ("Criterios de paros")
-              print("Minima poblacion de la iteracion")
-              print(sum(partitioned_data$pob) > min_pop_centroids[length(min_pop_centroids)])
-              print("Minimo numero de nodos")
-              print(nrow(partitioned_data)> 1)
-              print(partitioned_data)
-              print ("Criterio de paro, max num iteraciones")
-              print( iter_index + 1 <= length(min_pop_centroids))
+              #print ("Criterios de paros")
+              #print("Minima poblacion de la iteracion")
+              #print(sum(partitioned_data$pob) > min_pop_centroids[length(min_pop_centroids)])
+              #print("Minimo numero de nodos")
+              #print(nrow(partitioned_data)> 1)
+              #print(partitioned_data)
+              #print ("Criterio de paro, max num iteraciones")
+              #print( iter_index + 1 <= length(min_pop_centroids))
     }
     history_plot[[iter_index+1]] <- cluster_plot
     ## Result

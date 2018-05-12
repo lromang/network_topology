@@ -38,12 +38,12 @@ names(data) <- c("ent",
                 "lat",
                 "pob")
 
-## Work with Aguascalientes
-## 1 <- Ags
-ags_mun    <- dplyr::filter(data, ent == 1)
-Encoding(ags_mun$nom_loc) <- "UTF-8"
-ags_mun$nom_loc <- iconv(ags_mun$nom_loc, "UTF-8", "UTF-8",sub='')
-ags_points <- dplyr::select(ags_mun, lon, lat, pob,nom_loc)
+## Work with Chiapas
+## 7 <- chis
+chis_mun    <- dplyr::filter(data, ent == 7 & mun %in% c(107,108)  )
+Encoding(chis_mun$nom_loc) <- "UTF-8"
+chis_mun$nom_loc <- iconv(chis_mun$nom_loc, "UTF-8", "UTF-8",sub='')
+chis_points <- dplyr::select(chis_mun, lon, lat, pob,nom_loc)
 
 if (!file.exists("distance_matrix.RData")) {
     distance_matrix <- new.env(hash = TRUE)
@@ -57,7 +57,7 @@ if (!file.exists("road_hash.RData")) {
   attach("road_hash.RData")
 }
 
-data              <- ags_points
+data              <- chis_points
 distance_matrix_  <- distance_matrix
 road_hash_        <- road_hash
 
@@ -67,10 +67,10 @@ road_hash_        <- road_hash
 
 run_test <- function(pop_criterion) {
   #Constants
-  min_pop_centroids <- c(1000, 25, 25, 25, 25, 25)
+  min_pop_centroids <- c(1000, 25,25,25,25)
   mode              <- 'driving'
-  plot_with_labels <- FALSE
-  show_history_plot <- FALSE
+  plot_with_labels <- TRUE
+  show_history_plot <- TRUE
   with_real_distance <- FALSE
   without_road <- iterative_clustering(data,
                                distance_matrix_,
@@ -83,6 +83,18 @@ run_test <- function(pop_criterion) {
                                with_real_distance = with_real_distance)
   return (list("without_road"=without_road))
 }  
+max_min_min <- run_test(c(FALSE,TRUE))
+max_min_min[[1]]$plot
+
+max_pop_always  <- run_test(c(FALSE))
+max_pop_always[[1]]$plot
+
+
+
+min_pop_always   <- run_test(c(TRUE))
+min_pop_always[[1]]$plot
+
+
 #  with_road <-  iterative_clustering(data,
 #                                     distance_matrix_,
 #                                     road_hash_,
@@ -97,15 +109,6 @@ run_test <- function(pop_criterion) {
 #}
 
 
-
-max_pop_always  <- run_test(c(FALSE))
-max_pop_always[[1]]$plot
-
-max_min_min <- run_test(c(FALSE,TRUE))
-max_min_min[[1]]$plot
-
-min_pop_always   <- run_test(c(TRUE))
-min_pop_always[[1]]$plot
 
 ## --------------------------------------------------
 ## Save hash table

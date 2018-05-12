@@ -333,43 +333,15 @@ prim <- function(G){
 #####################################################################
 ###############            PLOT FUNCTIONS             ###############
 #####################################################################
-range_quantil <- function (current_value,max_value){
-  if (current_value < max_value/5 ){
-    return (3)
-  }
-  if (current_value < (max_value*2)/5){
-    return(6)
-  }
-  if (current_value < (max_value*3)/5){
-    return(9)
-  }
-  if (current_value < (max_value*4)/5){
-    return(12)
-  }
-  if (current_value <= max_value){
-    return(15)
-  }
-  
-}
 
 plot_init_cluster <- function (points){
   factpal <- colorFactor(
     palette = c('red', 'blue', 'orange', 'purple', 'gray'),
     domain = points$cluster
   )
-  max_value <- max(points$pob)
-  
-  map <- leaflet(data= points) %>% addTiles(group = "OSM(default)")  %>%
-    addCircleMarkers(
-      radius =~lapply(pob, function(x){range_quantil(x,max_value)}),
-      color = ~factpal(cluster),
-      stroke = FALSE, 
-      fillOpacity =1,
-      opacity=0.6,
-      popup = ~as.character(nom_loc),
-      label = ~as.character(nom_loc)
-    )
-  
+  #max_value <- max(points$pob)
+  map <-leaflet(data= points) %>% addTiles(group = "OSM(default)")
+
   for(i in unique(points$cluster)){
     data_clust <- dplyr::filter(points, cluster == i)
     this_pob   <- sum(data_clust$pob)
@@ -379,10 +351,20 @@ plot_init_cluster <- function (points){
                      lng = ~lon, 
                      lat = ~lat, 
                      weight = 4,
-                     popup = ~as.character(this_pob),
-                     label = ~as.character(this_pob))
+                     #popup = ~as.character(this_pob),
+                     #label = ~as.character(this_pob)
+                     )
   }
-  return (map )
+  map <-  addCircleMarkers(map,
+      radius = 3 ,#~lapply(pob, function(x){range_quantil(x,max_value)}),
+      color = ~factpal(cluster),
+      stroke = FALSE, 
+      fillOpacity =1,
+      opacity=0.6,
+      popup = ~as.character(nom_loc),
+      label = ~as.character(nom_loc)
+    )
+  return (map)
 }
 
 mark_as_connected_plot <- function (last_plot, tree) {
@@ -390,6 +372,7 @@ mark_as_connected_plot <- function (last_plot, tree) {
     last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(1)]), 
                                   lng = as.numeric(tree[i, c(2)]),
                                 radius =3, color= "green", fillOpacity = 1, opacity = 1
+                              
     )
       
       
@@ -404,7 +387,7 @@ mark_as_connected_plot <- function (last_plot, tree) {
 add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_index = 0, with_labels=FALSE) {
   if (only_one_point){
     last_plot <- addCircleMarkers(last_plot, lat =points$lat, lng = points$lon,
-                                  radius =6, color= "green", fillOpacity = 1, opacity = 1,
+                                  radius =3, color= "green", fillOpacity = 1, opacity = 1,
                                   popup = ~as.character(points$nom_loc))
     
   }else {
@@ -426,8 +409,8 @@ add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_i
                              lng = ~lon, 
                              lat = ~lat, 
                              weight = 4,
-                             popup = ~as.character(this_pob),
-                             label = ~as.character(this_pob),
+                             #popup = ~as.character(this_pob),
+                             #label = ~as.character(this_pob),
                              color = color)
       }
     }
