@@ -3,7 +3,6 @@
 ############## ITERATIVE CLUSTERING ##############
 ##################################################
 ##################################################
-
 ##-------------------------------------
 ## get tree clust
 ##-------------------------------------
@@ -177,7 +176,7 @@ clusterize <- function(data,
     ## Para evitar que haya tantos clusters como puntos
     min_pop_centroids <- min(min_pop_centroids, sum(data$pob)/2) 
     ## Número de clusters para empezar la iteración
-    centroids    <- floor((nrow(data) * .2) + 1)
+    centroids    <- floor((nrow(data) * .1) + 1) 
     cluster_data <- data.table(data)
     centers      <- c()
     dist_m       <- list()
@@ -216,10 +215,11 @@ clusterize <- function(data,
         min_pop_clust        <- min(cluster_data[,sum(pob), by = cluster]$V1)
         ## Ver si se cumple el criterio poblacional y si tenemos
         ## al menos dos clusters
-        if(min_pop_clust >= min_pop_centroids || centroids_next <= 2){
-            print(sprintf('Min Pop Clust = %i, Centroids = %i',
+        if(min_pop_clust >= min_pop_centroids  || centroids_next <= 2){
+            print(sprintf('Min Pop Clust = %i, Centroids = %i, Criterion pob =%f',
                           min_pop_clust,
-                          centroids
+                          centroids,
+                          min_pop_centroids
                           ))
               break
         }
@@ -264,7 +264,7 @@ iterative_clustering <- function(data,
                                 distance_matrix_,
                                 road_hash_,
                                 ## Población mínima por cluster en cada iteración. 
-                                min_pop_centroids = seq(1000, 100, by = -100), 
+                                min_pop_centroids = c(5000,2500,725,300), 
                                 ## Si se va a usar este criterio o no... actualmente alternativa es max pop
                                 ## podría ser también el cluster más disperso o el menos disperso o
                                 ## mezclas y ver cómo cambia...
@@ -290,12 +290,11 @@ iterative_clustering <- function(data,
     centers          <- clustered_res[[2]]
     clustered_data   <- clustered_res[[1]]
     ## First partition
-    #partitioned_data <- get_partition(clustered_data,
-    #                                 min_pop_criterion[1])
-    
+    partitioned_data <- get_partition(clustered_data,
+                                     min_pop_criterion[1])
     #First iteration always use puerto carlos as reference 
-    aux <- clustered_data$cluster[which(clustered_data$nom_loc == "Puerto Carlos")]
-    partitioned_data <-  dplyr::filter(clustered_data, cluster == aux[1])
+    #aux <- clustered_data$cluster[which(clustered_data$nom_loc == "Puerto Carlos")]
+    #partitioned_data <-  dplyr::filter(clustered_data, cluster == aux[1])
     
     ## Connected_node
     connected_node   <- centers[unique(partitioned_data$cluster), ]
@@ -328,9 +327,9 @@ iterative_clustering <- function(data,
                                              connected_node    = connected_node,
                                              build_with_road   = build_with_road,
                                              with_real_distance = with_real_distance)
-                                              
+                                      
               ## Get length of network
-              if (nrow(partitioned_data) > 1 && length(intermediate_data) == 4) {
+              if (nrow(intermediate_data[[1]]) > 1 && length(intermediate_data) == 4) {
                 tree                   <- prim(intermediate_data[[4]])
                 cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree, iter_index = iter_index, with_labels = plot_with_labels)
                 cluster_plot           <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
@@ -352,7 +351,7 @@ iterative_clustering <- function(data,
               coverage               <- get_coverage(centers = intermediate_data[[2]],
                                                     data    = intermediate_data[[1]],
                                                     ## Otro hiperparámetro que podría ser un arreglo
-                                                    radius  = 100)
+                                                    radius  = 1000)
               covered_locs           <- coverage[[2]]
               covered_pop            <- coverage[[1]]
               ## Add pop
@@ -384,7 +383,7 @@ iterative_clustering <- function(data,
     history_plot[[iter_index+1]] <- cluster_plot
     ## Result
     if (show_history_plot){
-      return (list('pop' = total_pob, 'net' = length_net, 'trees' = all_trees, 'plot'= history_plot))
+      return (list('pop' = total_pob, 'net' = length_net, 'trees' = all_trees, 'plot'= history_plot ))
     } 
     return (list('pop' = total_pob, 'net' = length_net, 'trees' = all_trees, 'plot'= cluster_plot))
     
