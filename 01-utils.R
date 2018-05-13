@@ -125,12 +125,22 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
         ## Print query
         print(query)
         print(distance)
+        
         if (length(distance) == 0) {
-            print("CHANGE KEY")
-            this_key    <<- this_key + 1
-            google_key  <- google_keys[this_key]
-            key         <- paste0("key=", google_key)
+            #to change key, we try again and check curl code 
+            curl     <- getCurlHandle()
+            resp     <- getURL(query, curl = curl)
+            info_url <- getCurlInfo(curl)
             distance    <- -1
+            if(info_url$response.code == 403){
+              this_key <- this_key + 1
+              print("CHANGE KEY")  
+              this_key    <<- this_key + 1
+              google_key  <- google_keys[this_key]
+              key         <- paste0("key=", google_key)
+            } else {
+              break
+            }
         }
     }
     ## If no more Queries
@@ -141,7 +151,7 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
     if(distance >= 0) {
         distance_matrix_[[key_1]] <- distance
     }
-    if (distance <= 0){
+    if (distance <= 0 && length(google_keys) < this_key + 1){
         print('TRYING GEOSPHERE DISTANCE')
         distance <- distm (c(origin[,2], origin[,1]),
                           c(destiny[,2], destiny[,1]),
@@ -336,7 +346,7 @@ prim <- function(G){
 
 plot_init_cluster <- function (points){
   factpal <- colorFactor(
-    palette = c('red', 'blue', 'orange', 'purple', 'gray'),
+    palette = c('red', 'blue', 'purple', 'gray'),
     domain = points$cluster
   )
   #max_value <- max(points$pob)
@@ -351,8 +361,8 @@ plot_init_cluster <- function (points){
                      lng = ~lon, 
                      lat = ~lat, 
                      weight = 4,
-                     #popup = ~as.character(this_pob),
-                     #label = ~as.character(this_pob)
+                     popup = ~as.character(this_pob),
+                     label = ~as.character(this_pob)
                      )
   }
   map <-  addCircleMarkers(map,
@@ -369,18 +379,26 @@ plot_init_cluster <- function (points){
 
 mark_as_connected_plot <- function (last_plot, tree) {
   for(i in 1:nrow(tree)){
+
     last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(1)]), 
-                                  lng = as.numeric(tree[i, c(2)]),
-                                radius =3, color= "green", fillOpacity = 1, opacity = 1
-                              
-    )
-      
-      
+                            lng = as.numeric(tree[i, c(2)]),
+                            radius =3, color= "green", fillOpacity =1, opacity =1
+    ) 
     last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(3)]), 
-                                    lng = as.numeric(tree[i, c(4)]),
-                                    radius =3, color= "green", fillOpacity = 1, opacity = 1
+                            lng = as.numeric(tree[i, c(4)]),
+                            radius =3, color= "green", fillOpacity = 1, opacity =1
     )
-      
+    
+    #last_plot <- addCircles(last_plot, lat =as.numeric(tree[i, c(3)]), 
+    #                                lng = as.numeric(tree[i, c(4)]),
+    #                                radius =1000, color= "green", fillOpacity = 0.3, opacity = 0.3
+    #)
+    #last_plot <- addCircles(last_plot, lat =as.numeric(tree[i, c(1)]), 
+    #                        lng = as.numeric(tree[i, c(2)]),
+    #                        radius =1000, color= "green", fillOpacity =0.3, opacity = 0.3
+    #) 
+
+    
     }
     return (last_plot) 
 }
@@ -409,8 +427,8 @@ add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_i
                              lng = ~lon, 
                              lat = ~lat, 
                              weight = 4,
-                             #popup = ~as.character(this_pob),
-                             #label = ~as.character(this_pob),
+                             popup = ~as.character(this_pob),
+                             label = ~as.character(this_pob),
                              color = color)
       }
     }
