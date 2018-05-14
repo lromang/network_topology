@@ -68,7 +68,7 @@ show_history_plot <- TRUE
 with_real_distance <- FALSE
 build_with_road   <- FALSE
 min_pop_criterion <- c(FALSE,TRUE)
-
+pop_criterion <- min_pop_criterion
 ## --------------------------------------------------
 ## Using differents parameters
 ## --------------------------------------------------
