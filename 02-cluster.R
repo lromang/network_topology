@@ -263,9 +263,6 @@ get_partition <- function(data, min_pop_criterion = TRUE){
 
 aux_iterative_clustering  <- function ( iter_index,
                                         cluster_plot,
-                                        history_plot,
-                                        total_pob,
-                                        length_net,
                                         connected_node,
                                         partitioned_data,
                                         min_pop_centroids,
@@ -275,12 +272,15 @@ aux_iterative_clustering  <- function ( iter_index,
                                         build_with_road,
                                         with_real_distance,
                                         explore_all = TRUE,
-                                        centers
+                                        centers,
+                                        max_iter = 10
                                         ) {
+  if (iter_index == max_iter) {
+    return ()
+  }
   if (!(sum(partitioned_data$pob) > min_pop_centroids[length(min_pop_centroids)] &&
         nrow(partitioned_data)    > 1 &&
         iter_index + 1 <= length(min_pop_centroids) )){
-    print ("Condicion no valida")
     return ()
   }
   ## Clusterize Data
@@ -297,37 +297,22 @@ aux_iterative_clustering  <- function ( iter_index,
   ## Get length of network
   if (nrow(intermediate_data[[1]]) > 1 && length(intermediate_data) == 4) {
     tree                   <- prim(intermediate_data[[4]])
+    for(i in 1:nrow(tree)){
+      centers[[length(centers)+1]]     <-  dplyr::filter(intermediate_data[[1]], (lat == as.numeric(tree[i, c(1)]) & lon == as.numeric(tree[i, c(2)])))[1,]
+      centers[[length(centers)+1]]     <-  dplyr::filter(intermediate_data[[1]], (lat == as.numeric(tree[i, c(3)]) & lon == as.numeric(tree[i, c(4)])))[1,]
+    } 
+   
     cluster_plot           <- add_tree_plot(cluster_plot,intermediate_data[[1]],tree, iter_index = iter_index, with_labels = plot_with_labels)
     cluster_plot           <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE)
-    history_plot[[length(history_plot)+1]] <- cluster_plot
-    
-    length_net[length(length_net)+1] <- sum(tree$p)
-    
-    ## Save results for
-    all_trees[[length(all_trees)+1]] <- tree
-    
-    
-    
   }else {
     ## Cluster with one centroid
     ## The node was connected.
     print ("SOLO UN NODO")
     cluster_plot       <- add_tree_plot(cluster_plot,connected_node,only_one_point = TRUE, with_labels = plot_with_labels)
-    history_plot[[length(history_plot)+1]] <- cluster_plot
     centers[[length(centers)+1]]     <- connected_node
     return (list('centers' = centers, 'plot'= cluster_plot ))
   }
-  ## Get Coverage
-  coverage               <- get_coverage(centers = intermediate_data[[2]],
-                                         data    = intermediate_data[[1]],
-                                         ## Otro hiperparámetro que podría ser un arreglo
-                                         radius  = 1000)
-  covered_locs           <- coverage[[2]]
-  covered_pop            <- coverage[[1]]
-  ## Add pop
-  total_pob[length(total_pob)+1]  <- sum(covered_pop) ## * n_partitions // Idea de Ante
-  ## Update data (don't know if this is correct????)
-  ## min_pop_cirterion could be an (TRUE, FALSE, FALSE,....) sequence
+  
   if (explore_all) {
     found_center     <- 0
     for(i in unique(intermediate_data[[1]]$cluster)){
@@ -337,9 +322,6 @@ aux_iterative_clustering  <- function ( iter_index,
       partition     <- aux_iterative_clustering(
                                   iter_index +1,
                                   cluster_plot,
-                                  history_plot,
-                                  total_pob,
-                                  length_net,
                                   connected_node,
                                   partitioned_data,
                                   min_pop_centroids,
@@ -349,14 +331,15 @@ aux_iterative_clustering  <- function ( iter_index,
                                   build_with_road,
                                   with_real_distance,
                                   explore_all,
-                                  centers
+                                  centers,
+                                  max_iter 
                                )
       if (length(partition) ==0 ){
         #cluster_plot     <- mark_as_connected_plot(cluster_plot,tree) 
         return (list('centers' = centers, 'plot'= cluster_plot ))
       }else {
         cluster_plot      <-       partition$plot
-        centers           <-       partition$centers
+        centers           <-     append(centers,  partition$centers)
       }
     }
    }else {
@@ -368,9 +351,6 @@ aux_iterative_clustering  <- function ( iter_index,
       partition     <- aux_iterative_clustering(
         iter_index +1,
         cluster_plot,
-        history_plot,
-        total_pob,
-        length_net,
         connected_node,
         partitioned_data,
         min_pop_centroids,
@@ -380,15 +360,15 @@ aux_iterative_clustering  <- function ( iter_index,
         build_with_road,
         with_real_distance,
         explore_all,
-        centers
+        centers,
+        max_iter
       )
       if (length(partition) ==0 ){
         #cluster_plot     <- mark_as_connected_plot(cluster_plot,tree) 
         return (list('centers' = centers, 'plot'= cluster_plot ))
       }else {
         cluster_plot      <-       partition$plot
-        centers           <-       partition$centers
-        
+        centers           <-     append(centers,  partition$centers)        
       }
   }
   
@@ -461,7 +441,6 @@ iterative_clustering <- function(data,
     ## ------------------------------
     ## Iterative Network Construction
     ## ------------------------------
-    all_trees        <- list()
     iter_index       <- 1
     length_net       <- c()
     total_pob        <- c()
@@ -472,9 +451,6 @@ iterative_clustering <- function(data,
     centers      [[iter_index]] <-  dplyr::filter(partitioned_data, lat== connected_node[["lat"]]  & lon ==connected_node[["lon"]] )[1,]
     response <- aux_iterative_clustering ( iter_index,
                                             cluster_plot,
-                                            history_plot,
-                                            total_pob,
-                                            length_net,
                                             connected_node,
                                             partitioned_data,
                                             min_pop_centroids,
@@ -484,21 +460,33 @@ iterative_clustering <- function(data,
                                             build_with_road,
                                             with_real_distance,
                                             explore_all = TRUE,
-                                           centers)
-    
+                                           centers,
+                                           max_iter =3)
     centroids <- do.call(rbind.data.frame, response$centers)
+    centroids  <-unique(centroids)
     dist_tree    <- get_distance_matrix(points =centroids,
                                         distance_matrix_ =  distance_matrix_,
                                         mode=mode,
                                         with_real_distance=with_real_distance)
-    cluster_plot <- response$plot
-    cluster_plot     <- mark_as_connected_plot(cluster_plot,prim(dist_tree[[2]])) 
+    cluster_plot     <- response$plot
+    tree             <- prim(dist_tree[[2]])
+    cluster_plot     <- mark_as_connected_plot(cluster_plot,tree) 
+    ## Get Coverage
+    coverage               <- get_coverage(centers = centroids,
+                                           data    = data,
+                                           ## Otro hiperparámetro que podría ser un arreglo
+                                           radius  = 1000)
+    ## Add pop
+    total_pob  <- sum(coverage[[1]]) 
+    total_net  <- sum(tree$p)
+ 
+    
    
     ## Result
     if (show_history_plot){
-      return (list('pop' = total_pob, 'net' = length_net, 'trees' = all_trees, 'plot'= cluster_plot ))
+      return (list('pop' = total_pob, 'net' = length_net, 'plot'= cluster_plot ))
     } 
-    return (list('pop' = total_pob, 'net' = length_net, 'trees' = all_trees, 'plot'= cluster_plot))
+    return (list('pop' = total_pob, 'net' = length_net,  'plot'= cluster_plot))
     
 }
 
