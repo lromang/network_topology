@@ -61,7 +61,7 @@ data              <- chis_points
 distance_matrix_  <- distance_matrix
 road_hash_        <- road_hash
 
-min_pop_centroids <- c(1000, 25,25,25,25)
+min_pop_centroids <-  c(5000,2500,725,300)
 mode              <- 'driving'
 plot_with_labels <- FALSE
 show_history_plot <- TRUE

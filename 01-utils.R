@@ -350,7 +350,7 @@ plot_init_cluster <- function (points){
     domain = points$cluster
   )
   #max_value <- max(points$pob)
-  map <-leaflet(data= points) %>% addTiles(group = "OSM(default)")
+  map <-leaflet(data= points) %>% addProviderTiles(providers$CartoDB.Positron) #addTiles(group = "OSM(default)")
 
   for(i in unique(points$cluster)){
     data_clust <- dplyr::filter(points, cluster == i)
