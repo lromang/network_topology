@@ -397,9 +397,15 @@ mark_as_connected_plot <- function (last_plot, tree) {
     #                        lng = as.numeric(tree[i, c(2)]),
     #                        radius =1000, color= "green", fillOpacity =0.3, opacity = 0.3
     #) 
+    
+      last_plot <- addPolylines(last_plot, lat = as.numeric(tree[i, c(1, 3)]),  weight = 3,
+                                opacity = 3,
+                                lng = as.numeric(tree[i, c(2, 4)]), color = "black")
+     
 
     
-    }
+  }
+  
     return (last_plot) 
 }
 add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_index = 0, with_labels=FALSE) {
@@ -433,46 +439,8 @@ add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_i
       }
     }
     
-    for(i in 1:nrow(tree)){
-      last_plot <- addPolylines(last_plot, lat = as.numeric(tree[i, c(1, 3)]),  weight = 3,
-                                opacity = 3,
-                                lng = as.numeric(tree[i, c(2, 4)]), color = "black")
-      if (with_labels) {
-        this_p <- tree[i,1:2]
-        names(this_p) <- c("lat", "lon")
-        this_p <- join(this_p, points, by=c("lat","lon"))
-        label_p <- this_p$nom_loc
-        this_p_2 <- tree[i,3:4]
-        names(this_p_2) <- c("lat", "lon")
-        this_p_2 <- join(this_p_2, points,by=c("lat","lon"))
-        label_p_2 <- this_p_2$nom_loc
-        last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(1)]), 
-                                      lng = as.numeric(tree[i, c(2)]),
-                                      radius =3, color= "red", fillOpacity = 1, opacity = 1,
-                                      label = ~as.character(label_p),
-                                      labelOptions = labelOptions(noHide = T, direction = "right")
-        )
-        
-        last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(3)]), 
-                                      lng = as.numeric(tree[i, c(4)]),
-                                      radius =3, color= "red", fillOpacity = 1, opacity = 1,
-                                      label = ~as.character(label_p_2),
-                                      labelOptions = labelOptions(noHide = T, direction = "right")
-        )
-      } else {
-        last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(1)]), 
-                                      lng = as.numeric(tree[i, c(2)]),
-                                      radius =3, color= "red", fillOpacity = 1, opacity = 1
-                                      )
-        
-        
-        last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(3)]), 
-                                      lng = as.numeric(tree[i, c(4)]),
-                                      radius =3, color= "red", fillOpacity = 1, opacity = 1
-                                      )
-        
-      }
-    }
+    
+    
   }
   return (last_plot)
 }
