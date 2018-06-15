@@ -41,6 +41,9 @@ distance_to_road <- function(point_, road_hash_){
     ## calculate the nearest road to a given point.
     ## point = geografic point in (lat, lon)
     ## ----------------------------------------
+    if (! with_real_distance){
+      return 
+    }
     point_key <- paste(point_, collapse = ",")
     if (!is.null(road_hash_[[point_key]] )) {
       return (road_hash_[[point_key]])
@@ -71,13 +74,19 @@ distances_to_road <- function(points, road_hash_){
 ##-------------------------------------
 ## get distance
 ##-------------------------------------
-get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'){
+get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving', with_real_distance){
     ##-------------------------------------
     ## This function uses Google's API directions to
     ## calculate the driving distance between two given points.
     ## origin  = geografic point in (latitude, longitude) format
     ## destiny = geografic point in (latitude, longitude) format
     ##-------------------------------------
+    if (!with_real_distance){
+      distance <- distm (c(origin[,2], origin[,1]),
+                         c(destiny[,2], destiny[,1]),
+                         fun = distHaversine)[1]
+      return (distance)
+    }
     ## Check if origin destiny is in dataframe
     key_part1 <- paste(origin, collapse = ",")
     key_part2 <- paste(destiny, collapse = ",")
@@ -116,12 +125,22 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
         ## Print query
         print(query)
         print(distance)
+        
         if (length(distance) == 0) {
-            print("CHANGE KEY")
-            this_key    <<- this_key + 1
-            google_key  <- google_keys[this_key]
-            key         <- paste0("key=", google_key)
+            #to change key, we try again and check curl code 
+            curl     <- getCurlHandle()
+            resp     <- getURL(query, curl = curl)
+            info_url <- getCurlInfo(curl)
             distance    <- -1
+            if(info_url$response.code == 403){
+              this_key <- this_key + 1
+              print("CHANGE KEY")  
+              this_key    <<- this_key + 1
+              google_key  <- google_keys[this_key]
+              key         <- paste0("key=", google_key)
+            } else {
+              break
+            }
         }
     }
     ## If no more Queries
@@ -132,7 +151,7 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
     if(distance >= 0) {
         distance_matrix_[[key_1]] <- distance
     }
-    if (distance <= 0){
+    if (distance <= 0 && length(google_keys) < this_key + 1){
         print('TRYING GEOSPHERE DISTANCE')
         distance <- distm (c(origin[,2], origin[,1]),
                           c(destiny[,2], destiny[,1]),
@@ -148,7 +167,7 @@ get_num_distance <- function(origin, destiny, distance_matrix_, mode = 'driving'
 ## ------------------------------------
 ## vanilla clusterize
 ## ------------------------------------
-vanilla_get_clusters <- function(points, centers, mode = 'driving', distance_matrix_){
+vanilla_get_clusters <- function(points, centers, mode = 'driving', distance_matrix_, with_real_distance=TRUE){
     ## Weights
     weights      <- points[,3]/sum(points[,3])
     clust_assign <- c()
@@ -158,7 +177,8 @@ vanilla_get_clusters <- function(points, centers, mode = 'driving', distance_mat
                            function(t) t <- get_num_distance(origin  = points[i,2:1],
                                                             destiny = t,
                                                             distance_matrix_ = distance_matrix_,
-                                                            mode = 'driving'
+                                                            mode = 'driving',
+                                                            with_real_distance = with_real_distance
                                                             )/weights[i]
                            )
         clust_assign[i] <- which(cent_dist == min(unlist(cent_dist)))[1]
@@ -228,7 +248,7 @@ vanilla_k_means <- function(points, n_centers,
 ##-------------------------------------
 ## get distance matrix
 ##-------------------------------------
-get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coords_cols = 2:1){
+get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coords_cols = 2:1, with_real_distance=TRUE){
   ##-------------------------------------
   ## This function uses Google's API directions to
   ## calculate the driving distance between each point.
@@ -256,7 +276,8 @@ get_distance_matrix <- function(points, distance_matrix_, mode = 'driving', coor
       dist_matrix[i, j] <- get_num_distance(points[i, coords_cols],
                                             points[j, coords_cols],
                                             distance_matrix_ ,
-                                            mode)
+                                            mode, 
+                                            with_real_distance)
       dist_matrix[j, i] <- dist_matrix[i, j]
       ## Tree Matrix
       tree_matrix         <- rbind(tree_matrix,
@@ -322,43 +343,15 @@ prim <- function(G){
 #####################################################################
 ###############            PLOT FUNCTIONS             ###############
 #####################################################################
-range_quantil <- function (current_value,max_value){
-  if (current_value < max_value/5 ){
-    return (3)
-  }
-  if (current_value < (max_value*2)/5){
-    return(6)
-  }
-  if (current_value < (max_value*3)/5){
-    return(9)
-  }
-  if (current_value < (max_value*4)/5){
-    return(12)
-  }
-  if (current_value <= max_value){
-    return(15)
-  }
-  
-}
 
 plot_init_cluster <- function (points){
   factpal <- colorFactor(
-    palette = c('red', 'blue', 'orange', 'purple', 'gray'),
+    palette = c('red', 'blue', 'purple', 'gray'),
     domain = points$cluster
   )
-  max_value <- max(points$pob)
-  
-  map <- leaflet(data= points) %>% addTiles(group = "OSM(default)")  %>%
-    addCircleMarkers(
-      radius =~lapply(pob, function(x){range_quantil(x,max_value)}),
-      color = ~factpal(cluster),
-      stroke = FALSE, 
-      fillOpacity =1,
-      opacity=0.6,
-      popup = ~as.character(nom_loc),
-      label = ~as.character(nom_loc)
-    )
-  
+  #max_value <- max(points$pob)
+  map <-leaflet(data= points) %>% addProviderTiles(providers$CartoDB.Positron) #addTiles(group = "OSM(default)")
+
   for(i in unique(points$cluster)){
     data_clust <- dplyr::filter(points, cluster == i)
     this_pob   <- sum(data_clust$pob)
@@ -369,31 +362,56 @@ plot_init_cluster <- function (points){
                      lat = ~lat, 
                      weight = 4,
                      popup = ~as.character(this_pob),
-                     label = ~as.character(this_pob))
+                     label = ~as.character(this_pob)
+                     )
   }
-  return (map )
+  map <-  addCircleMarkers(map,
+      radius = 3 ,#~lapply(pob, function(x){range_quantil(x,max_value)}),
+      color = ~factpal(cluster),
+      stroke = FALSE, 
+      fillOpacity =1,
+      opacity=0.6,
+      popup = ~as.character(nom_loc),
+      label = ~as.character(nom_loc)
+    )
+  return (map)
 }
 
 mark_as_connected_plot <- function (last_plot, tree) {
   for(i in 1:nrow(tree)){
+
     last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(1)]), 
-                                  lng = as.numeric(tree[i, c(2)]),
-                                radius =3, color= "green", fillOpacity = 1, opacity = 1
-    )
-      
-      
+                            lng = as.numeric(tree[i, c(2)]),
+                            radius =3, color= "green", fillOpacity =1, opacity =1
+    ) 
     last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(3)]), 
-                                    lng = as.numeric(tree[i, c(4)]),
-                                    radius =3, color= "green", fillOpacity = 1, opacity = 1
+                            lng = as.numeric(tree[i, c(4)]),
+                            radius =3, color= "green", fillOpacity = 1, opacity =1
     )
-      
-    }
+    
+    #last_plot <- addCircles(last_plot, lat =as.numeric(tree[i, c(3)]), 
+    #                                lng = as.numeric(tree[i, c(4)]),
+    #                                radius =1000, color= "green", fillOpacity = 0.3, opacity = 0.3
+    #)
+    #last_plot <- addCircles(last_plot, lat =as.numeric(tree[i, c(1)]), 
+    #                        lng = as.numeric(tree[i, c(2)]),
+    #                        radius =1000, color= "green", fillOpacity =0.3, opacity = 0.3
+    #) 
+    
+      last_plot <- addPolylines(last_plot, lat = as.numeric(tree[i, c(1, 3)]),  weight = 3,
+                                opacity = 3,
+                                lng = as.numeric(tree[i, c(2, 4)]), color = "black")
+     
+
+    
+  }
+  
     return (last_plot) 
 }
 add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_index = 0, with_labels=FALSE) {
   if (only_one_point){
     last_plot <- addCircleMarkers(last_plot, lat =points$lat, lng = points$lon,
-                                  radius =6, color= "green", fillOpacity = 1, opacity = 1,
+                                  radius =3, color= "green", fillOpacity = 1, opacity = 1,
                                   popup = ~as.character(points$nom_loc))
     
   }else {
@@ -421,46 +439,8 @@ add_tree_plot <- function (last_plot, points, tree, only_one_point=FALSE, iter_i
       }
     }
     
-    for(i in 1:nrow(tree)){
-      last_plot <- addPolylines(last_plot, lat = as.numeric(tree[i, c(1, 3)]),  weight = 3,
-                                opacity = 3,
-                                lng = as.numeric(tree[i, c(2, 4)]), color = "black")
-      if (with_labels) {
-        this_p <- tree[i,1:2]
-        names(this_p) <- c("lat", "lon")
-        this_p <- join(this_p, points, by=c("lat","lon"))
-        label_p <- this_p$nom_loc
-        this_p_2 <- tree[i,3:4]
-        names(this_p_2) <- c("lat", "lon")
-        this_p_2 <- join(this_p_2, points,by=c("lat","lon"))
-        label_p_2 <- this_p_2$nom_loc
-        last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(1)]), 
-                                      lng = as.numeric(tree[i, c(2)]),
-                                      radius =3, color= "red", fillOpacity = 1, opacity = 1,
-                                      label = ~as.character(label_p),
-                                      labelOptions = labelOptions(noHide = T, direction = "right")
-        )
-        
-        last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(3)]), 
-                                      lng = as.numeric(tree[i, c(4)]),
-                                      radius =3, color= "red", fillOpacity = 1, opacity = 1,
-                                      label = ~as.character(label_p_2),
-                                      labelOptions = labelOptions(noHide = T, direction = "right")
-        )
-      } else {
-        last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(1)]), 
-                                      lng = as.numeric(tree[i, c(2)]),
-                                      radius =3, color= "red", fillOpacity = 1, opacity = 1
-                                      )
-        
-        
-        last_plot <- addCircleMarkers(last_plot, lat =as.numeric(tree[i, c(3)]), 
-                                      lng = as.numeric(tree[i, c(4)]),
-                                      radius =3, color= "red", fillOpacity = 1, opacity = 1
-                                      )
-        
-      }
-    }
+    
+    
   }
   return (last_plot)
 }
